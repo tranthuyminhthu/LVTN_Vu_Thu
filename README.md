@@ -4,7 +4,7 @@
 
 This project aims to develop a modern fashion business system that integrates AI technologies to optimize user experience and product recommendations, while leveraging a Microservice Architecture to enhance scalability, maintainability, and deployment flexibility. The system supports product management, order processing, inventory management, and personalized features based on user behavior analysis and fashion trend predictions.
 
-![Workflow System](https://d1hjkbq40fs2x4.cloudfront.net/2017-08-21/files/landscape-photography_1645.jpg)
+![Workflow System](https://i.imgur.com/QFB6cQ5.png)
 
 ## Key Features
 
