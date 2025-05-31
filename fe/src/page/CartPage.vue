@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="relative p-8">
     <div class="grid">
       <div class="col-6">
         <div class="flex justify-between mb-4 items-center">
