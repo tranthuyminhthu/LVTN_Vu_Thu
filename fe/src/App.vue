@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import HomePage from './page/HomePage.vue'
 </script>
 
 <template>
-  <HomePage/>
+  <RouterView />
 </template>
 
 <style>
@@ -63,4 +62,11 @@ import HomePage from './page/HomePage.vue'
     initial-value: skewY(0);
   }
 }
+body, html, div {
+     scrollbar-width: none;
+     -ms-overflow-style: none;
+   }
+   body::-webkit-scrollbar, html::-webkit-scrollbar {
+     display: none;
+   }
 </style>
