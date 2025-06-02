@@ -1,10 +1,10 @@
 <template>
-  <div class="relative">
+  <div class="relative p-8">
     <div class="grid">
       <div class="col-6">
         <div class="flex justify-between mb-4 items-center">
           <p class="text-[30px] font-bold">Thông tin đặt hàng</p>
-          <p class="cursor-pointer text-[#2f5acf]">Chọn từ sổ địa chỉ</p>
+          <p class="cursor-pointer text-[#2f5acf]" @click="visible = true">Chọn từ sổ địa chỉ</p>
         </div>
         <form action="" class="mt-2">
           <div class="grid items-center">
@@ -213,6 +213,9 @@
       </div>
     </div>
   </div>
+  <Dialog v-model:visible="visible" modal header="Edit Profile" :style="{ width: '25rem' }">
+    <MapPicker @address-selected="handleAddress" />
+</Dialog>
 </template>
 <script lang="ts" setup>
 import InputText from "primevue/inputtext";
@@ -224,7 +227,9 @@ import RadioButton from "primevue/radiobutton";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import InputNumber from "primevue/inputnumber";
+import Dialog from 'primevue/dialog';
 import { ref, computed } from "vue";
+import MapPicker from "@/components/MapPicker.vue";
 const text1 = ref("");
 const phone = ref("");
 const email = ref("");
@@ -360,4 +365,8 @@ const products = ref([
   }
 ]);
 const selectedProducts = ref([]);
+const visible = ref(false);
+const handleAddress = (address) => {
+  console.log(address);
+};
 </script>
