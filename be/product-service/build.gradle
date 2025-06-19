@@ -18,9 +18,16 @@ repositories {
 }
 
 dependencies {
+	compileOnly("org.projectlombok:lombok:1.18.38")
+	annotationProcessor("org.projectlombok:lombok:1.18.38")
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation("org.springframework.data:spring-data-mongodb:4.5.1")
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testCompileOnly("org.projectlombok:lombok:1.18.38")
+	testAnnotationProcessor("org.projectlombok:lombok:1.18.38")
 }
 
 tasks.named('test') {
