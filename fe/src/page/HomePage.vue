@@ -12,6 +12,7 @@ import AppFooter from "@/components/AppFooter.vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import type { Swiper as SwiperType } from "swiper";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import { ref } from 'vue';
 
 // Import Swiper styles
 import "swiper/css";
@@ -23,11 +24,39 @@ const onSwiper = (swiper: SwiperType) => {
   console.log(swiper);
 };
 
-const onSlideChange = () => {
-  console.log("slide change");
-};
-
 const modules = [Navigation, Pagination, Autoplay];
+
+const selectedGender = ref('men');
+
+const menProducts = [
+  {
+    image: "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/June2025/Tshirt.jpg",
+    title: "Áo thun nam"
+  },
+  {
+    image: "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/June2025/Polo_61.jpg",
+    title: "Áo polo nam"
+  },
+  {
+    image: "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/June2025/Short_Nam1.jpg",
+    title: "Quần short nam"
+  }
+];
+
+const womenProducts = [
+  {
+    image: "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/June2025/Phu_kien12.jpg",
+    title: "Phụ kiện"
+  },
+  {
+    image: "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/June2025/Ao_Nu12.jpg",
+    title: "Áo Thể thao"
+  },
+  {
+    image: "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/June2025/Shorts_nu12.jpg",
+    title: "Quần thể thao"
+  }
+];
 </script>
 
 <template>
@@ -44,7 +73,6 @@ const modules = [Navigation, Pagination, Autoplay];
       <swiper
         :slides-per-view="1"
         @swiper="onSwiper"
-        @slideChange="onSlideChange"
         class="w-full h-screen"
         :modules="modules"
         :autoplay="{
@@ -54,7 +82,7 @@ const modules = [Navigation, Pagination, Autoplay];
         :navigation="true"
       >
         <swiper-slide>
-          <a href="/products">
+          <a href="/ai-recommendation">
             <img
               src="https://media3.coolmate.me/cdn-cgi/image/width=1920,quality=90,format=auto/uploads/April2025/1920x788(1)promax.jpg"
               alt=""
@@ -62,7 +90,7 @@ const modules = [Navigation, Pagination, Autoplay];
           </a>
         </swiper-slide>
         <swiper-slide>
-          <a href="/products">
+          <a href="/ai-recommendation">
             <img
               src="https://media3.coolmate.me/cdn-cgi/image/width=1920,quality=90,format=auto/uploads/May2025/T-SHIRT__POLO_THE_THAO_-_Desktop-1.jpg"
               alt=""
@@ -70,7 +98,7 @@ const modules = [Navigation, Pagination, Autoplay];
           </a>
         </swiper-slide>
         <swiper-slide>
-          <a href="/products">
+          <a href="/ai-recommendation">
             <img
               src="https://media3.coolmate.me/cdn-cgi/image/width=1920,quality=90,format=auto/uploads/May2025/T-SHIRT__POLO_THE_THAO_-_Desktopzz.jpg"
               alt=""
@@ -80,43 +108,37 @@ const modules = [Navigation, Pagination, Autoplay];
       </swiper>
       <div class="w-primary mx-auto mb-8">
         <div class="flex gap-4">
-          <span class="px-4 py-2 rounded-full bg-gray-200 font-bold text-xl"
-            >Đồ nam</span
+          <span 
+            @click="selectedGender = 'men'"
+            :class="[
+              'px-5 py-2 rounded-full font-bold text-xl cursor-pointer',
+              selectedGender === 'men' ? 'bg-black text-white' : 'bg-gray-200'
+            ]"
           >
-          <span class="px-4 py-2 rounded-full bg-gray-200 font-bold text-xl"
-            >Đồ nữ</span
+            Đồ nam
+          </span>
+          <span 
+            @click="selectedGender = 'women'"
+            :class="[
+              'px-5 py-2 rounded-full font-bold text-xl cursor-pointer',
+              selectedGender === 'women' ? 'bg-black text-white' : 'bg-gray-200'
+            ]"
           >
+            Đồ nữ
+          </span>
         </div>
         <div class="flex mt-4 gap-4">
-          <div class="flex flex-col gap-4">
-            <a href="" class="overflow-hidden rounded-2xl">
+          <div v-for="(product, index) in selectedGender === 'men' ? menProducts : womenProducts" 
+               :key="index" 
+               class="flex flex-col gap-4">
+            <a href="/products" class="overflow-hidden rounded-2xl">
               <img
-                src="https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Thun_Namz.jpg"
-                alt=""
+                :src="product.image"
+                :alt="product.title"
                 class="w-[280px] hover:scale-105 transition-all duration-300 object-cover flex-1 !rounded-2xl"
               />
             </a>
-            <div class="text-2xl font-bold text-center">Áo thun</div>
-          </div>
-          <div class="flex flex-col gap-4">
-            <a href="" class="overflow-hidden rounded-2xl">
-              <img
-                src="https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Thun_Namz.jpg"
-                alt=""
-                class="w-[280px] hover:scale-105 transition-all duration-300 object-cover flex-1 !rounded-2xl"
-              />
-            </a>
-            <div class="text-2xl font-bold text-center">Áo thun</div>
-          </div>
-          <div class="flex flex-col gap-4">
-            <a href="" class="overflow-hidden rounded-2xl">
-              <img
-                src="https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Thun_Namz.jpg"
-                alt=""
-                class="w-[280px] hover:scale-105 transition-all duration-300 object-cover flex-1 !rounded-2xl"
-              />
-            </a>
-            <div class="text-2xl font-bold text-center">Áo thun</div>
+            <div class="text-2xl font-bold text-center">{{ product.title }}</div>
           </div>
         </div>
       </div>
@@ -178,20 +200,20 @@ const modules = [Navigation, Pagination, Autoplay];
           Mua ngay
         </button>
       </div>
-      <div class="w-primary mx-auto mb-8">
-        <div>SẢN PHẨM MẶC HẰNG NGÀY</div>
+      <div class="w-primary mx-auto mb-8 mt-4">
+        <div class="!font-criteria font-bold mb-2 text-2xl">SẢN PHẨM MẶC HẰNG NGÀY</div>
         <div class="grid">
           <div class="col-3">
-            <ProductCard />
+            <ProductCard name="product-color-1" />
           </div>
           <div class="col-3">
-            <ProductCard />
+            <ProductCard name="product-color-2" />
           </div>
           <div class="col-3">
-            <ProductCard />
+            <ProductCard name="product-color-3" />
           </div>
           <div class="col-3">
-            <ProductCard />
+            <ProductCard name="product-color-4" />
           </div>
         </div>
       </div>
@@ -219,16 +241,16 @@ const modules = [Navigation, Pagination, Autoplay];
         <div>SẢN PHẨM MẶC HẰNG NGÀY</div>
         <div class="grid">
           <div class="col-3">
-            <ProductCard />
+            <ProductCard name="product-color-1" />
           </div>
           <div class="col-3">
-            <ProductCard />
+            <ProductCard name="product-color-2" />
           </div>
           <div class="col-3">
-            <ProductCard />
+            <ProductCard name="product-color-3" />
           </div>
           <div class="col-3">
-            <ProductCard />
+            <ProductCard name="product-color-4" />
           </div>
         </div>
       </div>

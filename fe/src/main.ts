@@ -1,4 +1,5 @@
 import './assets/main.css'
+import './assets/fonts.css'
 
 import { createApp } from 'vue'
 import App from './App.vue'
@@ -8,6 +9,7 @@ import Aura from '@primevue/themes/aura';
 import 'primeflex/primeflex.css';
 import 'primeicons/primeicons.css'
 import { definePreset } from '@primeuix/themes';
+import ToastService from 'primevue/toastservice';
 
 
 const app = createApp(App)
@@ -36,4 +38,5 @@ app.use(PrimeVue, {
         preset: MyPreset
     }
 });
+app.use(ToastService);
 app.mount('#app')

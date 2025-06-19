@@ -33,6 +33,7 @@
             <img :src="slotProps.item" alt="" class="h-6" />
           </template>
         </Timeline>
+        <p class="italic text-sm text-gray-500">Hạng thành viên được vừa được xét lại vào ngày 01/04/2025, ngày xét hạng tiếp theo: 01/07/2025 </p>
       </div>
       <div class="w-[30%] flex flex-col gap-2 text-right">
         <span>Bạn đang có</span>
@@ -88,6 +89,12 @@ const menuItems = ref([
     path: "/account/info",
   },
   {
+    title: "Sản phẩm yêu thích",
+    subtitle: "Sản phẩm yêu thích",
+    icon: "pi pi-heart",
+    path: "/account/favorites",
+  },
+  {
     title: "Đơn hàng của tôi",
     subtitle: "Theo dõi đơn hàng",
     icon: "pi pi-shopping-bag",
@@ -100,11 +107,18 @@ const menuItems = ref([
     path: "/account/address",
   },
   {
+    title: "Ví Voucher",
+    subtitle: "Ví Voucher",
+    icon: "pi pi-ticket",
+    path: "/account/voucher",
+  },
+  {
     title: "Đổi mật khẩu",
     subtitle: "Bảo mật tài khoản",
     icon: "pi pi-lock",
     path: "/account/password",
   },
+
 ]);
 
 const navigateTo = (path: string) => {
