@@ -1,9 +1,23 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import ChatPopup from './components/ChatPopup.vue';
+import { ref, provide } from 'vue';
+import LoadingGlobal from '@/components/LoadingGlobal.vue';
+import { useLoading } from '@/composables/useLoading';
+
+const loadingRef = ref<InstanceType<typeof LoadingGlobal> | null>(null);
+const { show: showLoading, hide: hideLoading } = useLoading();
+
+// Provide loading methods to all components
+provide('showLoading', showLoading);
+provide('hideLoading', hideLoading);
 </script>
 
 <template>
-  <RouterView />
+  <div class="min-h-screen admin-bg">
+    <ChatPopup />
+    <RouterView />
+  </div>
 </template>
 
 <style>
@@ -61,12 +75,13 @@ import { RouterLink, RouterView } from 'vue-router'
     inherits: false;
     initial-value: skewY(0);
   }
+  
 }
-body, html, div {
+/* body, html, div {
      scrollbar-width: none;
      -ms-overflow-style: none;
    }
    body::-webkit-scrollbar, html::-webkit-scrollbar {
      display: none;
-   }
+   } */
 </style>

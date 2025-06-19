@@ -4,7 +4,7 @@
       <AppHeader title="Product List" />
   
       <!-- Nội dung của page sẽ được render tại đây -->
-      <main class="!mt-header w-primary mx-auto pt-12">
+      <main class="">
         <router-view />
       </main>
   
@@ -27,7 +27,6 @@
   }
   main {
     flex: 1;
-    padding: 2rem;
   }
   footer {
     background: #f8f9fa;

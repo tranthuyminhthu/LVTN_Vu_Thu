@@ -14,10 +14,10 @@
                 <InputGroup class="rounded-full h-12">
                   <InputGroupAddon class="!rounded-l-full !bg-[#f1f1f1]">
                     <Select
-                      v-model="selectedCity"
-                      :options="cities"
+                      v-model="selectedGender"
+                      :options="genders"
                       optionLabel="name"
-                      placeholder="Select a City"
+                      placeholder="Select a Gender"
                       class="border-none !w-32 shadow-none !bg-inherit"
                     />
                   </InputGroupAddon>
@@ -114,12 +114,18 @@
                 alt=""
                 class="max-w-[55px] max-h-[44px] min-w-[44px]"
               />
-              <span class="w-full cursor-pointer">{{ category.name }}</span>
+              <div class="w-full cursor-pointer flex gap-1 flex-col">
+                <span>{{ category.name }}</span>
+                <span v-if="category.sub" class="flex items-center gap-1">
+                  <span class="text-xs">{{ category.sub }}</span>
+                  <img :src="category.imageSub" alt="" class="w-4 h-4" v-if="category.imageSub">
+                </span>
+              </div>
             </label>
           </div>
         </form>
       </div>
-      <div class="col-6 max-h-screen overflow-y-auto">
+      <div class="col-6 max-h-screen overflow-y-auto hide-scrollbar">
         <div class="text-[30px] font-bold">Giỏ hàng</div>
         <DataTable
           v-model:selection="selectedProducts"
@@ -161,6 +167,16 @@
             </template>
           </Column>
         </DataTable>
+        <div class="my-2 flex gap-4 overflow-x-auto w-full whitespace-nowrap pb-2">
+          <CouponCard />
+          <CouponCard />
+          <CouponCard />
+          <CouponCard />
+        </div>
+        <div class="my-2 flex gap-2">
+          <input type="text" class="w-full rounded-full border border-[#e6e6e680] p-2 bg-[#eeeeee]" placeholder="Nhập mã giảm giá">
+          <button class="bg-black text-white px-6 py-1 rounded-full cursor-pointer text-sm w-[30%]">Áp dụng Voucher</button>
+        </div>
         <div class="flex justify-between my-4">
           <span>Tạm tính</span>
           <span>356000đ</span>
@@ -208,14 +224,14 @@
             <p>Thành tiền <span class="text-[20px] font-bold text-[#2f5acf]">356000đ</span></p>
             <p>Được hoàn <span class="border-r border-black mr-2 pr-2 font-bold">1000đ</span>Tiết kiệm <span class="font-bold">1000đ</span></p>
           </div>
-          <button class="bg-black text-white px-8 py-2 rounded-full">Thanh toán</button>
+          <button class="bg-black text-white px-8 py-2 rounded-full cursor-pointer" @click="handlePayment">Thanh toán</button>
         </div>
       </div>
     </div>
   </div>
   <Dialog v-model:visible="visible" modal header="Edit Profile" :style="{ width: '25rem' }">
     <MapPicker @address-selected="handleAddress" />
-</Dialog>
+  </Dialog>
 </template>
 <script lang="ts" setup>
 import InputText from "primevue/inputtext";
@@ -230,14 +246,16 @@ import InputNumber from "primevue/inputnumber";
 import Dialog from 'primevue/dialog';
 import { ref, computed } from "vue";
 import MapPicker from "@/components/MapPicker.vue";
+import { useRouter } from "vue-router";
+import CouponCard from "@/components/CouponCard.vue";
 const text1 = ref("");
 const phone = ref("");
 const email = ref("");
-const selectedCity = ref({ name: "Anh/Chị", code: "LDN" });
-const cities = ref([
-  { name: "Anh", code: "NY" },
-  { name: "Chị", code: "RM" },
-  { name: "Anh/Chị", code: "LDN" },
+const selectedGender = ref({ name: "Anh/Chị"});
+const genders = ref([
+  { name: "Anh"},
+  { name: "Chị"},
+  { name: "Anh/Chị"},
 ]);
 const address = ref("");
 const note = ref("");
@@ -257,11 +275,14 @@ const categories = ref([
     name: "Thanh toán qua ZaloPay",
     key: "zalo",
     image: "https://mcdn.coolmate.me/image/October2024/mceclip3_6.png",
+    sub: "Hỗ trợ mọi hình thức thanh toán",
+    imageSub: "https://mcdn.coolmate.me/image/October2024/mceclip0_27.png",
   },
   {
     name: "Ví điện tử VNPAY",
     key: "vnpay",
     image: "https://mcdn.coolmate.me/image/October2024/mceclip0_81.png",
+    sub: "Quét Qr để thanh toán",
   },
 ]);
 
@@ -298,75 +319,24 @@ const products = ref([
     inventoryStatus: "INSTOCK",
     rating: 5,
   },
-  {
-    id: "1003",
-    code: "f2ád3",
-    name: "Bamboo Wádasdatch",
-    description: "Product Description",
-    image:
-      "https://media3.coolmate.me/cdn-cgi/image/width=320,height=362,quality=80/uploads/January2024/tatnganbassic.1_54.jpg",
-    price: 65,
-    category: "Accessories",
-    quantity: 24,
-    inventoryStatus: "INSTOCK",
-    rating: 5,
-  },
-  {
-    id: "1004",
-    code: "f2ád3",
-    name: "Bamboo Wádasdatch",
-    description: "Product Description",
-    image:
-      "https://media3.coolmate.me/cdn-cgi/image/width=320,height=362,quality=80/uploads/January2024/tatnganbassic.1_54.jpg",
-    price: 65,
-    category: "Accessories",
-    quantity: 24,
-    inventoryStatus: "INSTOCK",
-    rating: 5,
-  },
-  {
-    id: "1005",
-    code: "f2ád3",
-    name: "Bamboo Wádasdatch",
-    description: "Product Description",
-    image:
-      "https://media3.coolmate.me/cdn-cgi/image/width=320,height=362,quality=80/uploads/January2024/tatnganbassic.1_54.jpg",
-    price: 65,
-    category: "Accessories",
-    quantity: 24,
-    inventoryStatus: "INSTOCK",
-    rating: 5,
-  },
-  {
-    id: "1006",
-    code: "f2ád3",
-    name: "Bamboo Wádasdatch",
-    description: "Product Description",
-    image:
-      "https://media3.coolmate.me/cdn-cgi/image/width=320,height=362,quality=80/uploads/January2024/tatnganbassic.1_54.jpg",
-    price: 65,
-    category: "Accessories",
-    quantity: 24,
-    inventoryStatus: "INSTOCK",
-    rating: 5,
-  },
-  {
-    id: "1007",
-    code: "f2ád3",
-    name: "Bamboo Wádasdatch",
-    description: "Product Description",
-    image:
-      "https://media3.coolmate.me/cdn-cgi/image/width=320,height=362,quality=80/uploads/January2024/tatnganbassic.1_54.jpg",
-    price: 65,
-    category: "Accessories",
-    quantity: 24,
-    inventoryStatus: "INSTOCK",
-    rating: 5,
-  }
 ]);
 const selectedProducts = ref([]);
 const visible = ref(false);
 const handleAddress = (address) => {
   console.log(address);
 };
+const router = useRouter();
+const handlePayment = () => {
+  router.push('/order-success');
+};
 </script>
+
+<style>
+.hide-scrollbar {
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+</style>

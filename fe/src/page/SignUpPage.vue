@@ -38,6 +38,7 @@
           label="Continue with email"
           icon="pi pi-envelope"
           class="w-full"
+          @click="handleSignUp"
         />
         <Divider align="center">
           <b>Other sign up options</b>
@@ -94,8 +95,14 @@ import Button from "primevue/button";
 import Divider from "primevue/divider";
 import Select from "primevue/select";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 
 const fullName = ref("");
 const email = ref("");
 const checked = ref(false);
+const router = useRouter();
+
+const handleSignUp = () => {
+  router.push("/home");
+};
 </script>

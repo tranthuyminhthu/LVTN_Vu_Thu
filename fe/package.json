@@ -18,6 +18,7 @@
     "@primeuix/themes": "^1.0.3",
     "@primevue/themes": "^4.2.5",
     "@tailwindcss/vite": "^4.0.9",
+    "chart.js": "^4.4.9",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primevue": "^4.2.5",
