@@ -1,6 +1,7 @@
 package org.example.productservice.controller.internal;
 
 import lombok.RequiredArgsConstructor;
+import org.example.productservice.dto.ProductDto;
 import org.example.productservice.entity.ProductEntity;
 import org.example.productservice.service.ProductService;
 import org.springframework.http.HttpStatus;
@@ -23,5 +24,10 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<ProductEntity> insertProduct(@RequestBody ProductEntity product) {
         return new ResponseEntity<>(productService.insertProduct(product), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable String id) {
+        return new ResponseEntity<>(productService.getProductById(id), HttpStatus.OK);
     }
 }

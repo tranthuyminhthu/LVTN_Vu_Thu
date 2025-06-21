@@ -1,5 +1,7 @@
 package org.example.productservice.constant;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 @Getter
@@ -13,5 +15,20 @@ public enum Status {
 
     Status(String status) {
         this.status = status;
+    }
+
+    @JsonValue
+    public String getStatus() {
+        return status;
+    }
+
+    @JsonCreator
+    public static Status fromStatus(String status) {
+        for (Status s : Status.values()) {
+            if (s.getStatus().equals(status)) {
+                return s;
+            }
+        }
+        throw new IllegalArgumentException("Unknown status: " + status);
     }
 }

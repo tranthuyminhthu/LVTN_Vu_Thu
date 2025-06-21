@@ -3,16 +3,22 @@ package org.example.productservice.service;
 import lombok.RequiredArgsConstructor;
 import org.example.productservice.constant.Status;
 import org.example.productservice.dao.ProductDao;
+import org.example.productservice.dao.ProductVariantDao;
+import org.example.productservice.dto.ProductDto;
 import org.example.productservice.entity.ProductEntity;
+import org.example.productservice.entity.ProductVariantEntity;
+import org.springframework.beans.BeanUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
     private final ProductDao productDao;
+    private final ProductVariantDao productVariantDao;
 
     public List<ProductEntity> getAllProducts() {
         return productDao.findAll();
@@ -31,5 +37,16 @@ public class ProductService {
             return true;
         }
         return false;
+    }
+
+    public ProductDto getProductById(String id) {
+        ProductEntity productEntity =  productDao.findById(id).orElseThrow(() -> new EmptyResultDataAccessException("Product not found", 1));
+        ProductDto productDto = new ProductDto();
+        BeanUtils.copyProperties(productEntity, productDto);
+        List<ProductVariantEntity> productVariantEntities = productVariantDao.findByProductId(id);
+        if (Objects.nonNull(productVariantEntities) && !productVariantEntities.isEmpty()) {
+            productDto.setVariants(productVariantEntities);
+        }
+        return productDto;
     }
 }
