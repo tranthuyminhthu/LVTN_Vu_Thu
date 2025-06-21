@@ -47,16 +47,16 @@
       </div>
       <div class="flex gap-4 col-6">
         <div class="flex-1">
-          <p class="font-bold text-3xl">Áo Thun Nam Cotton 220GSM</p>
+          <p class="font-bold text-3xl">{{ product?.name }}</p>
           <p class="">100% Cotton</p>
           <span class="flex gap-2 my-2"
-            ><Rating v-model="rating" readonly />({{ rating }})</span
+            ><Rating :model-value="product?.rating" readonly />(39)</span
           >
           <div class="my-2">
-            <del class="text-[#c4c4c4]">179.000đ</del>
+            <del class="text-[#c4c4c4]">{{ formatVND(currentPrice) }}</del>
           </div>
           <p class="font-bold text-2xl flex gap-4 align-items-center">
-            <span class="font-bold text-2xl">129.000đ</span>
+            <span class="font-bold text-2xl">{{ formatVND(currentPrice) }}</span>
             <Badge>-11%</Badge>
           </p>
           <div class="mt-2 flex gap-2 align-items-center">
@@ -94,7 +94,7 @@
             ><span class="font-bold">{{ selectedSize }}</span>
           </p>
           <div class="flex flex-wrap gap-4 mb-4">
-            <SizePicker v-model="selectedSizeId" :sizeOptions="sizeOptions" />
+            <SizePicker v-model="selectedSizeId" :sizeOptions="availableSizes" />
           </div>
           <Toast />
           <div class="mb-4">
@@ -191,7 +191,7 @@ import Breadcrumb from "primevue/breadcrumb";
 import Rating from "primevue/rating";
 import Badge from "primevue/badge";
 import Panel from "primevue/panel";
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import ColorPicker from "@/components/ColorPicker.vue";
 import type { ColorOption } from "@/components/ColorPicker.vue";
 import SizePicker from "@/components/SizePicker.vue";
@@ -200,9 +200,15 @@ import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import Image from "primevue/image";
 import CommentProduct from "./CommentProduct.vue";
-import Dialog from "primevue/dialog";
+import { useRoute } from "vue-router";
 import { InputNumber } from "primevue";
 import DescriptionProduct from "./DescriptionProduct.vue";
+import type { Product } from "@/types";
+import { getProduct } from "@/api/product";
+import { formatVND } from "@/common";
+const route = useRoute();
+const id = String(route.params.id);
+const product = ref<Product>();
 const toast = useToast();
 const quantity = ref(1);
 const show = () => {
@@ -223,7 +229,6 @@ const items = ref([
   { label: "InputText", route: "/inputtext" },
 ]);
 const collapsed = ref(true);
-const rating = ref(4.9);
 const onToggle = (event: { value: boolean }) => {
   collapsed.value = !event.value;
 };
@@ -256,14 +261,8 @@ const images = ref([
     title: "Title 1",
   },
 ]);
-const selectedSizeId = ref(1);
-const sizeOptions = ref<SizeOption[]>([
-  { id: 1, label: "S" },
-  { id: 2, label: "M" },
-  { id: 3, label: "L" },
-  { id: 4, label: "XL" },
-  { id: 5, label: "XXL" },
-]);
+const selectedSizeId = ref<string | number>(1);
+const sizeOptions = ref<SizeOption[]>([]);
 
 const selectedSize = computed(() => {
   const selected = sizeOptions.value.find(
@@ -271,27 +270,8 @@ const selectedSize = computed(() => {
   );
   return selected?.label || "";
 });
-const selectedColorId = ref(1);
-const colorOptions = ref<ColorOption[]>([
-  {
-    id: 1,
-    type: "color" as const,
-    color: "#3b82f6",
-    alt: "Xanh dương",
-  },
-  {
-    id: 2,
-    type: "image" as const,
-    src: "https://media3.coolmate.me/cdn-cgi/image/width=160,height=160,quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Navy-7.jpg",
-    alt: "Navy",
-  },
-  {
-    id: 3,
-    type: "image" as const,
-    src: "https://media3.coolmate.me/cdn-cgi/image/width=160,height=160,quality=80,format=auto/uploads/April2025/ao-singlet-chay-bo-advanced-vent-techgraphic-pixel-381-vang.jpg",
-    alt: "Đen",
-  },
-]);
+const selectedColorId = ref<string | number>(1);
+const colorOptions = ref<ColorOption[]>([]);
 
 const selectedColor = computed(() => {
   const selected = colorOptions.value.find(
@@ -300,12 +280,64 @@ const selectedColor = computed(() => {
   return selected?.alt || "";
 });
 
-watch(selectedColorId, (newVal) => {
-  console.log("Selected color:", newVal);
+// Computed property to get current variant based on selected size and color
+const currentVariant = computed(() => {
+  if (!product.value?.variants) return null;
+  
+  const selectedSize = sizeOptions.value.find(option => option.id === selectedSizeId.value)?.label;
+  const selectedColorName = colorOptions.value.find(option => option.id === selectedColorId.value)?.alt;
+  
+  const foundVariant = product.value.variants.find(variant => {
+    const sizeMatch = variant.size === selectedSize;
+    const colorMatch = variant.colorName === selectedColorName;
+    return sizeMatch && colorMatch;
+  });
+  
+  return foundVariant;
 });
 
-watch(selectedSizeId, (newVal) => {
-  console.log("Selected size:", newVal);
+// Computed property for current price
+const currentPrice = computed(() => {
+  return currentVariant.value?.price || product.value?.price || 0;
+});
+
+// Computed properties to get available options based on current selection
+const availableSizes = computed(() => {
+  if (!product.value?.variants) return sizeOptions.value;
+  
+  const selectedColorName = colorOptions.value.find(option => option.id === selectedColorId.value)?.alt;
+  if (!selectedColorName) return sizeOptions.value;
+  
+  // Get all sizes that have variants with the selected color
+  const availableSizeLabels = [...new Set(
+    product.value.variants
+      .filter(variant => variant.colorName === selectedColorName)
+      .map(variant => variant.size)
+  )];
+  
+  return sizeOptions.value.map(option => ({
+    ...option,
+    disabled: !availableSizeLabels.includes(option.label)
+  }));
+});
+
+// Watcher to update size when color changes
+watch(selectedColorId, (newColorId) => {
+  const selectedColorName = colorOptions.value.find(option => option.id === newColorId)?.alt;
+  if (!selectedColorName || !product.value?.variants) return;
+  
+  // Find the first available size for the selected color
+  const availableSize = product.value.variants
+    .filter(variant => variant.colorName === selectedColorName)
+    .map(variant => variant.size)[0];
+  
+  if (availableSize) {
+    // Find the size option that matches the available size
+    const sizeOption = sizeOptions.value.find(option => option.label === availableSize);
+    if (sizeOption) {
+      selectedSizeId.value = sizeOption.id;
+    }
+  }
 });
 
 const selectedImage = ref(
@@ -326,4 +358,48 @@ const zoomImage = () => {
 };
 
 const zoomDialogVisible = ref(false);
+
+onMounted(async () => {
+  window.scrollTo(0, 0);
+  product.value = await getProduct(id);
+  
+  // Generate size options from product variants
+  if (product.value?.variants) {
+    const uniqueSizes = [...new Set(product.value.variants.map(variant => variant.size))];
+    sizeOptions.value = uniqueSizes.map((size, index) => ({
+      id: index + 1,
+      label: size
+    }));
+    
+    // Generate color options from product variants
+    const uniqueColors = [...new Set(product.value.variants.map(variant => variant.colorName))];
+    colorOptions.value = uniqueColors.map((colorName, index) => {
+      // Find the first variant with this color name to get the hex value
+      const variant = product.value!.variants.find(v => v.colorName === colorName);
+      return {
+        id: index + 1,
+        type: "color" as const,
+        color: variant?.colorHex || '#cccccc',
+        alt: colorName
+      };
+    });
+    
+    // Set default selections based on first variant
+    if (product.value.variants.length > 0) {
+      const firstVariant = product.value.variants[0];
+      
+      // Find the size option that matches the first variant's size
+      const defaultSizeOption = sizeOptions.value.find(option => option.label === firstVariant.size);
+      if (defaultSizeOption) {
+        selectedSizeId.value = defaultSizeOption.id;
+      }
+      
+      // Find the color option that matches the first variant's color name
+      const defaultColorOption = colorOptions.value.find(option => option.alt === firstVariant.colorName);
+      if (defaultColorOption) {
+        selectedColorId.value = defaultColorOption.id;
+      }
+    }
+  }
+});
 </script>

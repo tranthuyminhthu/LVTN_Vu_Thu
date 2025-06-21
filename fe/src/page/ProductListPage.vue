@@ -134,36 +134,17 @@
         </div>
       </div>
       <div class="grid">
-        <div class="col-3">
-          <ProductCard />
+        <div class="col-3" v-for="product in products" :key="product.id">
+          <ProductCard :product="product" />
         </div>
-        <div class="col-3">
-          <ProductCard />
-        </div>
-        <div class="col-3">
-          <ProductCard />
-        </div>
-        <div class="col-3">
-          <ProductCard />
-        </div>
-        <div class="col-3">
-          <ProductCard />
-        </div>
-        <div class="col-3">
-          <ProductCard />
-        </div>
-        <div class="col-3">
-          <ProductCard />
-        </div>
-        <div class="col-3">
-          <ProductCard />
-        </div>
-        <button
-          class="mx-auto mt-4 bg-black text-white px-4 py-2 rounded-full uppercase"
+      
+        
+      </div>
+      <button
+          class="mx-auto mt-4 bg-black text-white px-4 py-2 rounded-full uppercase block"
         >
           Xem thêm
         </button>
-      </div>
     </div>
   </div>
 </template>
@@ -171,7 +152,7 @@
 import Divider from "primevue/divider";
 import ProductCard from "@/components/ProductCard.vue";
 import Breadcrumb from "primevue/breadcrumb";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import Select from "primevue/select";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
@@ -179,6 +160,12 @@ import AccordionHeader from "primevue/accordionheader";
 import AccordionContent from "primevue/accordioncontent";
 import RadioButton from "primevue/radiobutton";
 import SizePicker, { type SizeOption } from "@/components/SizePicker.vue";
+import { getProducts } from "@/api/product";
+import type { Product } from "@/types";
+
+const products = ref<Product[]>([]);
+const loading = ref(false);
+
 const items = ref([
   { label: "Trang chủ", route: "/" },
   { label: "Đồ nam", route: "/products" },
@@ -207,4 +194,10 @@ const sizeOptions = ref<SizeOption[]>([
   { id: 4, label: "XL" },
   { id: 5, label: "XXL" },
 ]);
+
+onMounted(async () => {
+  loading.value = true;
+  products.value = await getProducts();
+  loading.value = false;
+});
 </script>

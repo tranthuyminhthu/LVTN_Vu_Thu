@@ -63,7 +63,7 @@ const router = createRouter({
       component: NotFoundPage
     },
     {
-      path: '/product',
+      path: '/product/:id',
       component: HeaderLayout,
       children: [
         {

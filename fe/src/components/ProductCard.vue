@@ -14,16 +14,16 @@
         @click="handleClick"
       />
     </div>
-    <p class="py-2">Combo 3 Áo ba lỗ 100% Cotton</p>
+    <p class="py-2">{{ props.product.name }}</p>
     <ColorPicker v-model="size" :colorOptions="colorOptions" :name="props.name" />
     <div class="flex items-center gap-2 text-sm mt-2">
-      <span class="font-bold">100.000đ</span>
+      <span class="font-bold">{{ formatVND(props.product.price) }}</span>
       <span
         class="rounded-lg bg-[#273bcd] p-1 text-white text-sm font-bold"
         style="font-size: 10px !important"
         >-20%</span
       >
-      <span class="line-through text-[#c4c4c4]">150.000đ</span>
+      <span class="line-through text-[#c4c4c4]">{{ formatVND(props.product.price) }}</span>
     </div>
     <div class="quick-add p-2">
       
@@ -54,7 +54,7 @@
       New
     </div>
     <div class="absolute top-2 left-2 flex gap-1 text-sm">
-      <span class="font-bold">4.8</span>
+      <span class="font-bold">{{ props.product.rating }}</span>
       <Rating :stars="1" :modelValue="1"/>
       <span class="text-[#273bcd] font-bold">(83)</span>
     </div>
@@ -66,15 +66,18 @@ import { useRouter } from "vue-router";
 import ColorPicker, { type ColorOption } from "./ColorPicker.vue";
 import { ref, watch } from "vue";
 import { Rating } from "primevue";
+import type { Product } from "@/types";
+import { formatVND } from "@/common";
 
 const router = useRouter();
 
 const props = defineProps<{
-  name?: string;
+  product: Product;
 }>();
 
 const handleClick = () => {
-  router.push({ name: "product" });
+  console.log(props.product.id);
+  router.push({ name: "product" , params: { id: props.product.id } });
 };
 const size = ref(1);
 const colorOptions = ref<ColorOption[]>([
@@ -100,6 +103,8 @@ const colorOptions = ref<ColorOption[]>([
 watch(size, (newVal) => {
   console.log('Selected color:', newVal); 
 });
+
+
 </script>
 
 <style scoped>
