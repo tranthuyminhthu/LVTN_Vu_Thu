@@ -19,6 +19,7 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import ProductCard from "@/components/ProductCard.vue";
+import type { Product } from "@/types";
 
 const onSwiper = (swiper: SwiperType) => {
   console.log(swiper);
@@ -57,11 +58,50 @@ const womenProducts = [
     title: "Quần thể thao"
   }
 ];
+
+// Sample product data for ProductCard components
+const sampleProducts: Product[] = [
+  {
+    id: "1",
+    name: "Áo thun nam basic",
+    description: "Áo thun nam chất liệu cotton thoáng mát",
+    price: 199000,
+    rating: 4.5,
+    status: "active",
+    variants: []
+  },
+  {
+    id: "2", 
+    name: "Áo polo nam thể thao",
+    description: "Áo polo nam phù hợp cho thể thao",
+    price: 299000,
+    rating: 4.8,
+    status: "active",
+    variants: []
+  },
+  {
+    id: "3",
+    name: "Quần jean nam slim fit",
+    description: "Quần jean nam kiểu dáng slim fit hiện đại",
+    price: 399000,
+    rating: 4.6,
+    status: "active",
+    variants: []
+  },
+  {
+    id: "4",
+    name: "Áo khoác denim nam",
+    description: "Áo khoác denim nam phong cách casual",
+    price: 599000,
+    rating: 4.7,
+    status: "active",
+    variants: []
+  }
+];
 </script>
 
 <template>
   <div class="relative">
-    <AppHeader />
     <div class="">
       <!-- <AppBanner />
       <HomeSection2 />
@@ -204,16 +244,16 @@ const womenProducts = [
         <div class="!font-criteria font-bold mb-2 text-2xl">SẢN PHẨM MẶC HẰNG NGÀY</div>
         <div class="grid">
           <div class="col-3">
-            <ProductCard name="product-color-1" />
+            <ProductCard :product="sampleProducts[0]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-2" />
+            <ProductCard :product="sampleProducts[1]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-3" />
+            <ProductCard :product="sampleProducts[2]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-4" />
+            <ProductCard :product="sampleProducts[3]" />
           </div>
         </div>
       </div>
@@ -241,16 +281,16 @@ const womenProducts = [
         <div>SẢN PHẨM MẶC HẰNG NGÀY</div>
         <div class="grid">
           <div class="col-3">
-            <ProductCard name="product-color-1" />
+            <ProductCard :product="sampleProducts[0]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-2" />
+            <ProductCard :product="sampleProducts[1]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-3" />
+            <ProductCard :product="sampleProducts[2]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-4" />
+            <ProductCard :product="sampleProducts[3]" />
           </div>
         </div>
       </div>

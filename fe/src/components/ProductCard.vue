@@ -2,49 +2,47 @@
   <div class="product-card">
     <div class="image-wrapper">
       <img
-        src="https://media3.coolmate.me/cdn-cgi/image/width=672,height=990,quality=85,format=auto/uploads/October2024/Mockup_Ao_tran_ao_tot_bunggang_copy_(7).jpg"
+        :src="typeof props.product.images?.[0] === 'string' ? props.product.images[0] : 'https://via.placeholder.com/300'"
         alt=""
         class="product-image"
         @click="handleClick"
       />
       <img
-        src="https://media3.coolmate.me/cdn-cgi/image/width=672,height=990,quality=85,format=auto/uploads/October2024/Mockup_Ao_tran_ao_tot_bunggang_copy_(6).jpg"
+        :src="typeof props.product.images?.[1] === 'string'
+          ? props.product.images[1]
+          : (typeof props.product.images?.[0] === 'string'
+              ? props.product.images[0]
+              : 'https://via.placeholder.com/300')"
         alt=""
         class="product-image hover-image"
         @click="handleClick"
       />
     </div>
-    <p class="py-2">{{ props.product.name }}</p>
-    <ColorPicker v-model="size" :colorOptions="colorOptions" :name="props.name" />
-    <div class="flex items-center gap-2 text-sm mt-2">
-      <span class="font-bold">{{ formatVND(props.product.price) }}</span>
-      <span
-        class="rounded-lg bg-[#273bcd] p-1 text-white text-sm font-bold"
-        style="font-size: 10px !important"
-        >-20%</span
-      >
-      <span class="line-through text-[#c4c4c4]">{{ formatVND(props.product.price) }}</span>
+    <div class="product-content">
+      <p class="product-name">{{ props.product.name }}</p>
+      <ColorPicker v-model="selectedColor" :colorOptions="colorOptions" />
+      <div class="flex items-center gap-2 text-sm mt-2">
+        <span class="font-bold">{{ formatVND(selectedVariant?.price || props.product.price) }}</span>
+        <span
+          class="rounded-lg bg-[#273bcd] p-1 text-white text-sm font-bold"
+          style="font-size: 10px !important"
+          >-20%</span
+        >
+        <span class="line-through text-[#c4c4c4]">{{ formatVND(selectedVariant?.price || props.product.price) }}</span>
+      </div>
     </div>
     <div class="quick-add p-2">
-      
       <p class="font-bold">Thêm nhanh vào giỏ hàng</p>
       <div class="flex gap-2 my-2">
         <span
+          v-for="size in availableSizes"
+          :key="size"
           class="bg-white px-3 py-1 text-center rounded-lg cursor-pointer size"
-          >M</span
+          :class="{ 'selected-size': selectedSize === size }"
+          @click="selectSize(size)"
         >
-        <span
-          class="bg-white px-3 py-1 text-center rounded-lg cursor-pointer size"
-          >L</span
-        >
-        <span
-          class="bg-white px-3 py-1 text-center rounded-lg cursor-pointer size"
-          >XL</span
-        >
-        <span
-          class="bg-white px-3 py-1 text-center rounded-lg cursor-pointer size"
-          >2XL</span
-        >
+          {{ size }}
+        </span>
       </div>
     </div>
     <div
@@ -64,9 +62,9 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import ColorPicker, { type ColorOption } from "./ColorPicker.vue";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { Rating } from "primevue";
-import type { Product } from "@/types";
+import type { Product, ProductVariant } from "@/types";
 import { formatVND } from "@/common";
 
 const router = useRouter();
@@ -79,32 +77,76 @@ const handleClick = () => {
   console.log(props.product.id);
   router.push({ name: "product" , params: { id: props.product.id } });
 };
-const size = ref(1);
-const colorOptions = ref<ColorOption[]>([
-  {
-    id: 1,
+
+const selectedColor = ref(1);
+const selectedSize = ref<string>('');
+
+// Generate color options from variants
+const colorOptions = computed<ColorOption[]>(() => {
+  const uniqueColors = new Map<string, { colorHex: string; colorName: string }>();
+  
+  props.product.variants?.forEach(variant => {
+    if (!uniqueColors.has(variant.colorHex)) {
+      uniqueColors.set(variant.colorHex, {
+        colorHex: variant.colorHex,
+        colorName: variant.colorName
+      });
+    }
+  });
+
+  return Array.from(uniqueColors.values()).map((color, index) => ({
+    id: index + 1,
     type: 'color' as const,
-    color: '#3b82f6',
-    alt: 'Xanh dương'
-  },
-  {
-    id: 2,
-    type: 'image' as const,
-    src: 'https://media3.coolmate.me/cdn-cgi/image/width=160,height=160,quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Navy-7.jpg',
-    alt: 'Navy'
-  },
-  {
-    id: 3,
-    type: 'image' as const,
-    src: 'https://media3.coolmate.me/cdn-cgi/image/width=160,height=160,quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Den-7.jpg',
-    alt: 'Đen'
+    color: color.colorHex,
+    alt: color.colorName
+  }));
+});
+
+// Generate available sizes from variants
+const availableSizes = computed<string[]>(() => {
+  const sizes = new Set<string>();
+  props.product.variants?.forEach(variant => {
+    sizes.add(variant.size);
+  });
+  return Array.from(sizes).sort();
+});
+
+// Get selected variant based on color and size
+const selectedVariant = computed<ProductVariant | undefined>(() => {
+  if (!selectedColor.value || !selectedSize.value) return undefined;
+  
+  const selectedColorOption = colorOptions.value[selectedColor.value - 1];
+  if (!selectedColorOption) return undefined;
+  
+  return props.product.variants?.find(variant => 
+    variant.colorHex === selectedColorOption.color && 
+    variant.size === selectedSize.value
+  );
+});
+
+const selectSize = (size: string) => {
+  selectedSize.value = selectedSize.value === size ? '' : size;
+};
+
+// Set default selections
+watch(() => props.product, (newProduct) => {
+  if (newProduct.variants?.length > 0) {
+    selectedColor.value = 1;
+    selectedSize.value = availableSizes.value[0] || '';
   }
-]);
-watch(size, (newVal) => {
+}, { immediate: true });
+
+watch(selectedColor, (newVal) => {
   console.log('Selected color:', newVal); 
 });
 
+watch(selectedSize, (newVal) => {
+  console.log('Selected size:', newVal);
+});
 
+watch(selectedVariant, (newVal) => {
+  console.log('Selected variant:', newVal);
+});
 </script>
 
 <style scoped>
@@ -112,22 +154,48 @@ watch(size, (newVal) => {
   background-color: black !important;
   color: white;
 }
+
+.selected-size {
+  background-color: black !important;
+  color: white;
+}
+
 .product-card {
   position: relative;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 400px;
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .image-wrapper {
   position: relative;
   width: 100%;
+  height: 300px;
+  overflow: hidden;
 }
 
 .product-image {
-  border-radius: 0.5rem;
+  border-radius: 0.5rem 0.5rem 0 0;
   cursor: pointer;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
 }
 
 .hover-image {
@@ -139,6 +207,26 @@ watch(size, (newVal) => {
 
 .product-card:hover .hover-image {
   opacity: 1;
+}
+
+.product-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 0.5rem;
+}
+
+.product-name {
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.8em;
 }
 
 .quick-add {

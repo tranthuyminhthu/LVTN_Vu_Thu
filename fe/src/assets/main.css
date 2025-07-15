@@ -9,3 +9,42 @@
 body {
   font-family: Plus Jakarta Sans, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
 }
+
+/* Custom utility classes */
+.w-primary {
+  width: var(--spacing-primary);
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.h-screen {
+  height: 100vh;
+}
+
+.bottom-86 {
+  bottom: 21.5rem;
+}
+
+.bottom-62 {
+  bottom: 15.5rem;
+}
+
+.bottom-52 {
+  bottom: 13rem;
+}
+
+.bottom-42 {
+  bottom: 10.5rem;
+}
+
+.bottom-32 {
+  bottom: 8rem;
+}
+
+.bottom-20 {
+  bottom: 5rem;
+}
+
+.bottom-14 {
+  bottom: 3.5rem;
+}

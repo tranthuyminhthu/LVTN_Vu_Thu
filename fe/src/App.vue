@@ -15,7 +15,7 @@ provide('hideLoading', hideLoading);
 
 <template>
   <div class="min-h-screen admin-bg">
-    <ChatPopup />
+    <!-- <ChatPopup /> -->
     <RouterView />
   </div>
 </template>

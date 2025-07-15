@@ -20,4 +20,12 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    allowedHosts: [
+      '7f40-116-102-65-136.ngrok-free.app', // Thêm host ngrok của bạn
+      'localhost' // Giữ localhost để chạy cục bộ
+    ],
+    host: '0.0.0.0',
+    port: 5173,
+  }
 })
