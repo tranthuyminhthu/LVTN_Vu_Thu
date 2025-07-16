@@ -10,7 +10,8 @@ import 'primeflex/primeflex.css';
 import 'primeicons/primeicons.css'
 import { definePreset } from '@primeuix/themes';
 import ToastService from 'primevue/toastservice';
-
+import ConfirmationService from 'primevue/confirmationservice';
+import { useAuth } from './composables/useAuth'
 
 const app = createApp(App)
 
@@ -39,4 +40,10 @@ app.use(PrimeVue, {
     }
 });
 app.use(ToastService);
+app.use(ConfirmationService);
+
+// Khởi tạo authentication khi app khởi động
+const { initializeAuth } = useAuth()
+initializeAuth()
+
 app.mount('#app')

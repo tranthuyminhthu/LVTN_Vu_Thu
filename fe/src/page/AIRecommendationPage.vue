@@ -1,17 +1,14 @@
 <template>
   <div class="p-6">
     <!-- Upload Section -->
-    
+
     <div class="bg-white rounded-lg p-6 shadow-sm mb-6">
       <h2 class="text-lg font-semibold mb-4">Tải lên hình ảnh để nhận gợi ý</h2>
-      <BlockUI :blocked="blocked">
+      <LoadingGlobal :isLoading="isLoading">
         <template #default>
-            <div class="absolute inset-0 flex flex-col items-center justify-center" v-if="blocked"><i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i></div>
-        
-        <div
-          class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center"
-        >
-          
+          <div
+            class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center"
+          >
             <div v-if="!selectedImage" class="space-y-4">
               <i class="pi pi-image text-4xl text-gray-400"></i>
               <p class="text-gray-500">Kéo thả hình ảnh vào đây hoặc</p>
@@ -53,9 +50,9 @@
                 </button>
               </div>
             </div>
-        </div>
-    </template>
-      </BlockUI>
+          </div>
+        </template>
+      </LoadingGlobal>
     </div>
 
     <!-- Analysis Results -->
@@ -84,7 +81,11 @@
       class="bg-white rounded-lg p-6 shadow-sm"
     >
       <div class="!grid grid-cols-1 md:grid-cols-5 gap-6">
-        <ProductCard v-for="product in sortedProducts" :key="product.id">
+        <ProductCard
+          v-for="product in sortedProducts"
+          :key="product.id"
+          :product="product"
+        >
         </ProductCard>
       </div>
     </div>
@@ -97,9 +98,11 @@
 import { ref, computed } from "vue";
 import ProductCard from "@/components/ProductCard.vue";
 import { useLoading } from "@/composables/useLoading";
-import BlockUI from "primevue/blockui";
+import LoadingGlobal from "@/components/LoadingGlobal.vue";
+import type { Product } from "@/types";
+import { getRecommend } from "@/api/recommend";
 const { show, hide } = useLoading();
-const blocked = ref(false);
+const isLoading = ref(false);
 
 interface Color {
   hex: string;
@@ -111,26 +114,21 @@ interface AnalysisResults {
   colors: Color[];
 }
 
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  relevance: number;
-}
-
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedImage = ref<string | null>(null);
+const selectedFile = ref<File | null>(null);
 const isAnalyzing = ref(false);
 const analysisResults = ref<AnalysisResults | null>(null);
 const recommendedProducts = ref<Product[]>([]);
-const sortBy = ref("relevance");
+const sortedProducts = computed(() => {
+  return [...recommendedProducts.value];
+});
 
 const handleFileUpload = (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files && input.files[0]) {
     const file = input.files[0];
+    selectedFile.value = file;
     const reader = new FileReader();
     reader.onload = (e) => {
       selectedImage.value = e.target?.result as string;
@@ -141,6 +139,7 @@ const handleFileUpload = (event: Event) => {
 
 const removeImage = () => {
   selectedImage.value = null;
+  selectedFile.value = null;
   analysisResults.value = null;
   recommendedProducts.value = [];
   if (fileInput.value) {
@@ -148,69 +147,44 @@ const removeImage = () => {
   }
 };
 
+const mapRecommendations = (recommendations: any[]): Product[] => {
+  return recommendations.map((item) => ({
+    id: item.product_id,
+    name: item.product_name || item.category_vi,
+    description: item.product_description || '',
+    price: item.product_price,
+    rating: (item.confidence || 0.8) * 5, // scale confidence to 5-star rating
+    status: "available",
+    variants: [],
+    images: item.images && Array.isArray(item.images) ? item.images : [],
+  }));
+};
+
 const analyzeImage = async () => {
-  if (!selectedImage.value) return;
-  blocked.value = true;
+  if (!selectedFile.value) return;
+  isLoading.value = true;
   isAnalyzing.value = true;
   try {
-    // TODO: Implement actual AI analysis
-    // This is mock data for demonstration
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const response = await getRecommend(selectedFile.value);
+    console.log(response);
 
-    analysisResults.value = {
-      styles: ["Casual", "Streetwear", "Minimalist"],
-      colors: [
-        { hex: "#3b82f6", name: "Xanh dương" },
-        { hex: "#1f2937", name: "Xám đậm" },
-        { hex: "#ffffff", name: "Trắng" },
-      ],
-    };
+    // Nếu response có trường recommendations thì map ra recommendedProducts
+    if (response && response.recommendations) {
+      recommendedProducts.value = mapRecommendations(response.recommendations);
+    } else {
+      recommendedProducts.value = [];
+    }
 
-    recommendedProducts.value = [
-      {
-        id: 1,
-        name: "Áo thun basic",
-        description: "Áo thun cotton 100%",
-        price: 199000,
-        image: "https://via.placeholder.com/300",
-        relevance: 0.95,
-      },
-      {
-        id: 2,
-        name: "Quần jean slim fit",
-        description: "Quần jean co giãn",
-        price: 499000,
-        image: "https://via.placeholder.com/300",
-        relevance: 0.85,
-      },
-      {
-        id: 3,
-        name: "Giày sneaker",
-        description: "Giày thể thao đế cao su",
-        price: 899000,
-        image: "https://via.placeholder.com/300",
-        relevance: 0.75,
-      },
-    ];
+    // Nếu muốn map thêm analysisResults từ response, có thể làm ở đây
+    // analysisResults.value = ...
+
   } catch (error) {
     console.error("Error analyzing image:", error);
   } finally {
     isAnalyzing.value = false;
-    blocked.value = false;
+    isLoading.value = false;
   }
 };
-
-const sortedProducts = computed(() => {
-  const products = [...recommendedProducts.value];
-  switch (sortBy.value) {
-    case "price_asc":
-      return products.sort((a, b) => a.price - b.price);
-    case "price_desc":
-      return products.sort((a, b) => b.price - a.price);
-    default:
-      return products.sort((a, b) => b.relevance - a.relevance);
-  }
-});
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("vi-VN", {

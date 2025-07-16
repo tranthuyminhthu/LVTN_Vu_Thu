@@ -117,7 +117,7 @@
           </div>
           <button
             class="border rounded-full w-full py-2 bg-black text-white cursor-pointer"
-            @click="show"
+            @click="addItemToCart"
           >
             Thêm vào giỏ hàng
           </button>
@@ -184,7 +184,7 @@
     </div>
   </div>
   <DescriptionProduct />
-  <CommentProduct />
+  <CommentProduct :productId="Number(id)" />
 </template>
 <script setup lang="ts">
 import Breadcrumb from "primevue/breadcrumb";
@@ -206,28 +206,53 @@ import DescriptionProduct from "./DescriptionProduct.vue";
 import type { Product } from "@/types";
 import { getProduct } from "@/api/product";
 import { formatVND } from "@/common";
+import { addItemToCart as addItemToCartApi } from "@/api/cart";
 const route = useRoute();
 const id = String(route.params.id);
 const product = ref<Product>();
 const toast = useToast();
 const quantity = ref(1);
-const show = () => {
-  toast.add({
-    severity: "success",
-    summary: "Đã thêm vào giỏ hàng",
-    detail: "Vào giỏ hàng để thêm chi tiết",
-    life: 3000,
+const addItemToCart = () => {
+  addItemToCartApi({
+    sku: currentVariant.value?.sku || "",
+    quantity: quantity.value,
+    price: currentPrice.value,
+  }).then(() => {
+    toast.add({
+      severity: "success",
+      summary: "Đã thêm vào giỏ hàng",
+      detail: "Vào giỏ hàng để thêm chi tiết",
+      life: 3000,
+    });
+  }).catch((error) => {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Thêm vào giỏ hàng thất bại",
+      life: 3000,
+    });
   });
 };
 const home = ref({
   icon: "pi pi-home",
-  route: "/introduction",
+  route: "/",
 });
+
 const items = ref([
-  { label: "Components" },
-  { label: "Form" },
-  { label: "InputText", route: "/inputtext" },
+  // Danh mục nếu có, ví dụ:
+  // { label: product.value?.category || "Danh mục" },
+  { label: "Sản phẩm", route: "/products" },
+  { label: product.value?.name || "..." },
 ]);
+
+watch(product, (newProduct) => {
+  if (newProduct) {
+    items.value = [
+      { label: "Sản phẩm", route: "/products" },
+      { label: newProduct.name },
+    ];
+  }
+});
 const collapsed = ref(true);
 const onToggle = (event: { value: boolean }) => {
   collapsed.value = !event.value;
@@ -340,14 +365,8 @@ watch(selectedColorId, (newColorId) => {
   }
 });
 
-const selectedImage = ref(
-  "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/April2025/ao-singlet-chay-bo-advanced-vent-techgraphic-pixel-360-vang_60.jpg"
-);
-
-const thumbnails = [
-  "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/April2025/ao-singlet-chay-bo-advanced-vent-techgraphic-pixel-360-vang_60.jpg",
-  "https://media3.coolmate.me/cdn-cgi/image/format=auto/uploads/April2025/ao-singlet-chay-bo-advanced-vent-techgraphic-pixel-379-vang_87.jpg",
-];
+const thumbnails = ref<string[]>([]);
+const selectedImage = ref<string>("");
 
 const changeImage = (image: string) => {
   selectedImage.value = image;
@@ -363,6 +382,16 @@ onMounted(async () => {
   window.scrollTo(0, 0);
   product.value = await getProduct(id);
   
+  // Map images from API
+  if (product.value?.images && product.value.images.length > 0) {
+    thumbnails.value = product.value.images.map(img => img);
+    selectedImage.value = thumbnails.value[0];
+  } else {
+    thumbnails.value = [
+      "https://via.placeholder.com/300x400?text=No+Image"
+    ];
+    selectedImage.value = thumbnails.value[0];
+  }
   // Generate size options from product variants
   if (product.value?.variants) {
     const uniqueSizes = [...new Set(product.value.variants.map(variant => variant.size))];

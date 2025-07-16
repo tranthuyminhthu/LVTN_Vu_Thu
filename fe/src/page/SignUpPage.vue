@@ -1,26 +1,39 @@
 <template>
   <AppHeader title="Product List" />
+  <Toast />
   <div class="!mt-header max-w-primary mx-auto pt-12">
     <div class="grid">
       <div class="col !pr-12 pt-8">
         <h1 class="font-bold text-2xl mb-4 text-center">Sign up with email</h1>
         <FloatLabel variant="in" class="mb-2 w-full">
           <InputText
-            id="full_name"
-            v-model="fullName"
+            id="username"
+            v-model="username"
             variant="filled"
             class="w-full"
           />
-          <label for="full_name">Full name</label>
+          <label for="username">Username</label>
         </FloatLabel>
-        <FloatLabel variant="in">
+        <FloatLabel variant="in" class="mb-2 w-full">
           <InputText
             id="email"
             v-model="email"
             variant="filled"
             class="w-full"
+            type="email"
           />
           <label for="email">Email</label>
+        </FloatLabel>
+        <FloatLabel variant="in" class="mb-2 w-full">
+          <Password
+            id="password"
+            v-model="password"
+            variant="filled"
+            class="w-full"
+            :feedback="false"
+            toggleMask
+          />
+          <label for="password">Password</label>
         </FloatLabel>
         <div class="flex items-center gap-2 my-4">
           <Checkbox
@@ -73,7 +86,7 @@
         </p>
         <p class="bg-gray-100 p-4 text-center rounded">
           Already have an account?
-          <a href="/login" class="text-primary font-bold underline">Log in</a>
+          <router-link to="/login" class="text-primary font-bold underline">Log in</router-link>
         </p>
       </div>
 
@@ -94,15 +107,46 @@ import Checkbox from "primevue/checkbox";
 import Button from "primevue/button";
 import Divider from "primevue/divider";
 import Select from "primevue/select";
+import Toast from "primevue/toast";
+import Password from "primevue/password";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { register } from "../api/auth";
+import { useToast } from "primevue/usetoast";
 
-const fullName = ref("");
+const username = ref("");
 const email = ref("");
+const password = ref("");
 const checked = ref(false);
 const router = useRouter();
+const toast = useToast();
 
-const handleSignUp = () => {
-  router.push("/home");
+const handleSignUp = async () => {
+  try {
+    await register({
+      username: username.value,
+      email: email.value,
+      password: password.value,
+    });
+    
+    // Hiển thị toast thành công
+    toast.add({
+      severity: 'success',
+      summary: 'Đăng ký thành công',
+      detail: 'Tài khoản của bạn đã được tạo thành công!',
+      life: 3000
+    });
+    
+    // Chuyển hướng sau khi đăng ký thành công
+    router.push("/home");
+  } catch (error) {
+    // Hiển thị toast lỗi
+    toast.add({
+      severity: 'error',
+      summary: 'Đăng ký thất bại',
+      detail: 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại!',
+      life: 5000
+    });
+  }
 };
 </script>
