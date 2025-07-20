@@ -30,16 +30,33 @@ export interface Product {
   rating: number;
   status: string | null;
   variants: ProductVariant[];
+  images?: string[];
+  createdBy?: string;
   // Optional fields for UI display
   image?: string;
-  images?: string[];
   category?: string;
   views?: number;
   sales?: number;
 }
 
-export const getProducts = async () => {
-  const response = await axiosInstance.get("/api/products");
+export interface ProductResponse {
+  products: Product[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface ProductQueryParams {
+  page?: number;
+  size?: number;
+  category?: string;
+  status?: string;
+  vendorId?: string;
+}
+
+export const getProducts = async (params: ProductQueryParams = {}): Promise<ProductResponse> => {
+  const response = await axiosInstance.get("/api/products", { params });
   return response.data;
 };
 

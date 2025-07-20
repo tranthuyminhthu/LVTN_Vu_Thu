@@ -117,7 +117,7 @@
       </div>
       <Divider align="center"> </Divider>
       <div class="my-4 flex justify-between items-center">
-        <p>9 kết quả</p>
+        <p>{{ productsPagination.totalElements }} kết quả</p>
         <div class="flex items-center gap-2">
           <p class="flex-1">Sắp xếp theo</p>
           <Select
@@ -133,18 +133,28 @@
           />
         </div>
       </div>
-      <div class="grid">
+      
+      <div v-if="loading" class="flex justify-center items-center py-8">
+        <div class="loading-spinner"></div>
+        <span class="ml-2">Đang tải sản phẩm...</span>
+      </div>
+      
+      <div v-else class="grid">
         <div class="col-3" v-for="product in products" :key="product.id">
           <ProductCard :product="product" />
         </div>
-      
-        
       </div>
-      <button
-          class="mx-auto mt-4 bg-black text-white px-4 py-2 rounded-full uppercase block"
-        >
-          Xem thêm
-        </button>
+      
+      <Paginator
+        v-if="productsPagination.totalElements > 0"
+        :rows="productsPagination.size"
+        :totalRecords="productsPagination.totalElements"
+        :first="productsPagination.page * productsPagination.size"
+        @page="onProductPageChange"
+        :lazy="true"
+        :rowsPerPageOptions="[4, 8, 12, 16]"
+        class="mt-6"
+      />
     </div>
   </div>
 </template>
@@ -152,7 +162,8 @@
 import Divider from "primevue/divider";
 import ProductCard from "@/components/ProductCard.vue";
 import Breadcrumb from "primevue/breadcrumb";
-import { onMounted, ref } from "vue";
+import Paginator from "primevue/paginator";
+import { onMounted, ref, watch } from "vue";
 import Select from "primevue/select";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
@@ -160,11 +171,78 @@ import AccordionHeader from "primevue/accordionheader";
 import AccordionContent from "primevue/accordioncontent";
 import RadioButton from "primevue/radiobutton";
 import SizePicker, { type SizeOption } from "@/components/SizePicker.vue";
-import { getProducts } from "@/api/product";
+import { getProducts, type ProductResponse, type ProductQueryParams } from "@/api/product";
 import type { Product } from "@/types";
 
+// API data for products
 const products = ref<Product[]>([]);
 const loading = ref(false);
+const productsPagination = ref({
+  page: 0,
+  size: 8,
+  totalElements: 0,
+  totalPages: 0
+});
+
+// Load products from API
+const loadProducts = async () => {
+  try {
+    loading.value = true;
+    const params: ProductQueryParams = {
+      page: productsPagination.value.page,
+      size: productsPagination.value.size
+    };
+    
+    const response = await getProducts(params);
+    console.log('Products API Response:', response);
+    
+    // Convert API Product to types Product
+    products.value = response.products.map(product => ({
+      id: product.id.toString(), // Convert number to string
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      rating: product.rating,
+      status: product.status || '',
+      variants: product.variants.map(variant => ({
+        sku: variant.sku || '',
+        productId: variant.productId?.toString() || '',
+        size: variant.size,
+        colorName: variant.colorName,
+        colorHex: variant.colorHex,
+        price: variant.price,
+        stockQuantity: variant.stockQuantity
+      })),
+      images: product.images || []
+    }));
+    
+    productsPagination.value = {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages
+    };
+    console.log('Products Pagination state:', {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+      first: response.page * response.size
+    });
+  } catch (error) {
+    console.error('Error loading products:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Handle product pagination
+const onProductPageChange = (event: { first: number; rows: number; page: number }) => {
+  console.log('Product page change event:', event);
+  productsPagination.value.page = event.page;
+  productsPagination.value.size = event.rows;
+  loadProducts();
+};
 
 const items = ref([
   { label: "Trang chủ", route: "/" },
@@ -195,9 +273,23 @@ const sizeOptions = ref<SizeOption[]>([
   { id: 5, label: "XXL" },
 ]);
 
-onMounted(async () => {
-  loading.value = true;
-  products.value = await getProducts();
-  loading.value = false;
+onMounted(() => {
+  loadProducts();
 });
 </script>
+
+<style scoped>
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>

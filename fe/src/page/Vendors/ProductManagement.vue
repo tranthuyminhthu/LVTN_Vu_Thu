@@ -4,7 +4,7 @@
     <Toast />
 
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-semibold">Quản lý sản phẩm</h1>
+      <h1 class="text-2xl font-semibold text-white">Quản lý sản phẩm</h1>
       <button
         @click="openAddProductModal"
         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -547,7 +547,7 @@ const formatPrice = (price: number) => {
 const getProductImage = (product: Product) => {
   // Return first image URL from images array if available
   if (product.images && product.images.length > 0) {
-    return product.images[0].url;
+    return product.images[0];
   }
   // Fallback to placeholder if no images
   return "https://via.placeholder.com/150";

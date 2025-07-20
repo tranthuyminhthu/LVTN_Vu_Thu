@@ -35,6 +35,7 @@ export interface RegisterData {
     password: string;
     firstName?: string;
     lastName?: string;
+    isVendor?: boolean; // Thêm trường isVendor để phân biệt user/vendor
 }
 
 export interface LoginData {
@@ -97,4 +98,20 @@ export interface ApiMessageResponse {
   message: string;
   isMe: boolean;
   createdDate: string;
+}
+
+export interface UserInfo {
+  userId: string;
+  email: string;
+  username: string;
+  fullName: string | null;
+  type: string | null;
+  image: string | null;
+  height: number | null;
+  weight: number | null;
+  gender: string | null;
+  shopName: string | null;
+  role: string[];
+  dob: string | null;
+  phone?: string | null;
 }

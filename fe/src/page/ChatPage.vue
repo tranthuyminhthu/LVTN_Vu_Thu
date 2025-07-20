@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gray-100">
+  <div class="bg-gray-100 rounded-lg">
     <Splitter style="height: calc(100vh - 60px);" class="overflow-y-hidden">
       <SplitterPanel :size="25" :minSize="15">
         <!-- Chat List -->

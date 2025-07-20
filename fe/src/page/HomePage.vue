@@ -8,6 +8,7 @@ import HomeSection5 from "@/components/HomeSection5.vue";
 import HomeSection6 from "@/components/HomeSection6.vue";
 import HomeSection7 from "@/components/HomeSection7.vue";
 import AppFooter from "@/components/AppFooter.vue";
+import AuthTest from "@/components/AuthTest.vue";
 // Import Swiper Vue.js components
 import { Swiper, SwiperSlide } from "swiper/vue";
 import type { Swiper as SwiperType } from "swiper";
@@ -294,7 +295,14 @@ const sampleProducts: Product[] = [
           </div>
         </div>
       </div>
+      
+      <!-- <div class="w-primary mx-auto mb-8">
+        <AuthTest />
+      </div>
+      
+      <div class="w-primary mx-auto mb-8">
+        <UserInfo />
+      </div> -->
     </div>
-    <AppFooter />
   </div>
 </template>

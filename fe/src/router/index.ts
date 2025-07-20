@@ -35,6 +35,7 @@ import AIRecommendationPage from "@/page/AIRecommendationPage.vue";
 import FavoriteProductsPage from "@/page/account/FavoriteProductsPage.vue";
 import ChatPage from "@/page/ChatPage.vue";
 import OnlyHeaderLayout from "@/layouts/OnlyHeaderLayout.vue";
+import { useAuthStore } from "@/store";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -177,6 +178,10 @@ const router = createRouter({
     {
       path: "/vendor",
       component: VendorLayout,
+      meta: {
+        requiresAuth: true,
+        roles: ['VENDOR'],
+      },
       children: [
         {
           path: "dashboard",
@@ -227,6 +232,40 @@ const router = createRouter({
       component: NotFoundPage,
     },
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  
+  // // Kiểm tra nếu route yêu cầu authentication
+  // if (to.meta.requiresAuth) {
+  //   if (!authStore.user) {
+  //     // Nếu chưa đăng nhập, redirect về login
+  //     next('/login');
+  //     return;
+  //   }
+    
+  //   // Kiểm tra role nếu có yêu cầu
+  //   if (to.meta.roles && Array.isArray(to.meta.roles)) {
+  //     const hasRequiredRole = to.meta.roles.some((role: string) => 
+  //       authStore.hasRole(role)
+  //     );
+      
+  //     if (!hasRequiredRole) {
+  //       // Nếu không có role phù hợp, redirect về home
+  //       next('/');
+  //       return;
+  //     }
+  //   }
+  // }
+  
+  // // Nếu đã đăng nhập và cố gắng truy cập login/signup, redirect về home
+  // if (authStore.user && (to.name === 'login' || to.name === 'signup')) {
+  //   next('/');
+  //   return;
+  // }
+  
+  next();
 });
 
 export default router;

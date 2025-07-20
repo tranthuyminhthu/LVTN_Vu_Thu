@@ -35,17 +35,10 @@
           />
           <label for="password">Password</label>
         </FloatLabel>
-        <div class="flex items-center gap-2 my-4">
-          <Checkbox
-            v-model="checked"
-            inputId="ingredient1"
-            name="pizza"
-            value="Cheese"
-          />
-          <label for="ingredient1">
-            Send me special offers. personalized recommendations, and learning
-            tips.</label
-          >
+        <!-- Thay select role thành checkbox -->
+        <div class="mb-2 w-full flex items-center gap-2">
+          <Checkbox v-model="isVendor" inputId="isVendor" :binary="true" />
+          <label for="isVendor">Đăng ký làm người bán</label>
         </div>
         <Button
           label="Continue with email"
@@ -118,6 +111,7 @@ const username = ref("");
 const email = ref("");
 const password = ref("");
 const checked = ref(false);
+const isVendor = ref(false); // Mặc định là user, nếu check thì là vendor
 const router = useRouter();
 const toast = useToast();
 
@@ -127,6 +121,7 @@ const handleSignUp = async () => {
       username: username.value,
       email: email.value,
       password: password.value,
+      isVendor: isVendor.value, // Truyền trực tiếp giá trị boolean
     });
     
     // Hiển thị toast thành công
