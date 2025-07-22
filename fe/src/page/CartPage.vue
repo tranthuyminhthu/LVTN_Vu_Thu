@@ -301,6 +301,8 @@ import type { Cart, CartItemWithProduct, CartItem } from "@/types";
 import { formatVND } from "@/common";
 import Button from "primevue/button";
 import ConfirmDialog from "primevue/confirmdialog";
+import { createOrder } from "@/api/order";
+import type { CreateOrderPayload } from "@/api/order";
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -394,8 +396,58 @@ const handleAddress = (data: { address: string, name?: string, phone?: string, e
   });
 };
 
-const handlePayment = () => {
-  router.push('/order-success');
+const handlePayment = async () => {
+  if (selectedProducts.value.length === 0) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Cảnh báo',
+      detail: 'Vui lòng chọn sản phẩm để thanh toán.',
+      life: 3000
+    });
+    return;
+  }
+
+  // Chuẩn bị dữ liệu đơn hàng
+  const orderPayload: CreateOrderPayload = {
+    items: selectedProducts.value.map(item => {
+      let image: string | undefined = undefined;
+      const img = item.productDetails?.images?.[0];
+      if (typeof img === 'string') image = img;
+      // Nếu là File thì bỏ qua hoặc lấy ''
+      return {
+        cartItemId: item.id,
+        productSku: item.sku,
+        productName: item.productDetails?.name || '',
+        quantity: item.quantity,
+        price: item.price,
+        image
+      };
+    }),
+    shippingAddress: address.value,
+    paymentMethod: selectedCategory.value === 'Thanh toán khi nhận hàng' ? 'CASH' : selectedCategory.value,
+    receiverName: text1.value,
+    receiverPhone: phone.value,
+    receiverEmail: email.value,
+    note: note.value
+  };
+
+  try {
+    await createOrder(orderPayload);
+    toast.add({
+      severity: 'success',
+      summary: 'Thành công',
+      detail: 'Đơn hàng đã được tạo thành công!',
+      life: 2000
+    });
+    router.push('/order-success');
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể tạo đơn hàng. Vui lòng thử lại.',
+      life: 3000
+    });
+  }
 };
 
 const updateQuantity = (item: CartItemWithProduct) => {

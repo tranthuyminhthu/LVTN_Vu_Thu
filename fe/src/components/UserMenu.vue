@@ -1,6 +1,6 @@
 <template>
-  <div v-if="isAuthenticated" class="flex items-center gap-4">
-    <div class="flex items-center gap-2">
+  <div v-if="isAuthenticated" class="flex items-center gap-4 cursor-pointer">
+    <div class="flex items-center gap-2 "  @click="handleUserMenu">
       <div class="!w-8 !h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold">
         {{ userInitials }}
       </div>
@@ -38,9 +38,11 @@ import { computed } from 'vue'
 import Button from 'primevue/button'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from 'primevue/usetoast'
+import { useRouter } from 'vue-router'
 
 const { user, isAuthenticated, logout } = useAuth()
 const toast = useToast()
+const router = useRouter()
 
 const userInitials = computed(() => {
   if (!user.value?.username) return 'U'
@@ -66,5 +68,9 @@ const handleLogout = async () => {
       life: 3000
     })
   }
+}
+
+const handleUserMenu = () => {
+  router.push({ name: 'info' })
 }
 </script> 

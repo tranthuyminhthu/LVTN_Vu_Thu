@@ -47,8 +47,8 @@
       </div>
       <div class="flex gap-4 col-6">
         <div class="flex-1">
-          <p class="font-bold text-3xl">{{ product?.name }}</p>
-          <p class="">100% Cotton</p>
+          <p class="font-bold text-3xl">{{ product?.name || "..." }}</p>
+          <!-- <p class="">100% Cotton</p> -->
           <span class="flex gap-2 my-2"
             ><Rating :model-value="product?.rating" readonly />(39)</span
           >
@@ -59,11 +59,7 @@
             <span class="font-bold text-2xl">{{ formatVND(currentPrice) }}</span>
             <Badge>-11%</Badge>
           </p>
-          <div class="mt-2 flex gap-2 align-items-center">
-            <i class="pi pi-truck"></i>
-            <p class="font-medium">Freeship đơn trên 200K</p>
-          </div>
-          <div class="flex gap-4 my-4">
+          <!-- <div class="flex gap-4 my-4">
             <span>Mã giảm giá</span>
             <span
               style="
@@ -73,12 +69,12 @@
             >
               Giảm 40k
             </span>
-          </div>
-          <img
+          </div> -->
+          <!-- <img
             src="https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/April2025/mceclip0_54.jpg"
             alt=""
             class="rounded-md"
-          />
+          /> -->
           <p class="my-2">
             <span>Màu sắc: </span
             ><span class="font-bold">{{ selectedColor }}</span>
@@ -97,7 +93,7 @@
             <SizePicker v-model="selectedSizeId" :sizeOptions="availableSizes" />
           </div>
           <Toast />
-          <div class="mb-4">
+          <div class="mb-4 flex gap-2">
             <InputNumber
             v-model="quantity"
             showButtons
@@ -115,13 +111,25 @@
             </template>
           </InputNumber>
           </div>
-          <button
-            class="border rounded-full w-full py-2 bg-black text-white cursor-pointer"
-            @click="addItemToCart"
-          >
-            Thêm vào giỏ hàng
-          </button>
-          <Panel
+          <div class="flex gap-2 mb-4">
+            <button
+              class="border rounded-lg flex-1 py-2 bg-black text-white cursor-pointer"
+              @click="addItemToCart"
+            >
+              Thêm vào giỏ hàng
+            </button>
+            <Button 
+              icon="pi pi-comments" 
+              class="rounded-lg text-black bg-gray-200 border-none hover:bg-gray-300" 
+              @click="openChat" 
+              :pt="{ icon: { class: 'text-black' } }"
+            />
+          </div>
+          <div class="flex gap-2 align-items-center">
+            <i class="pi pi-truck"></i>
+            <p class="font-medium">Freeship đơn trên 200K</p>
+          </div>
+          <!-- <Panel
             toggleable
             class="!bg-[#f1f3ff] my-4"
             ref="panelRef"
@@ -148,8 +156,8 @@
               nulla pariatur. Excepteur sint occaecat cupidatat non proident,
               sunt in culpa qui officia deserunt mollit anim id est laborum.
             </p>
-          </Panel>
-          <div class="grid">
+          </Panel> -->
+          <!-- <div class="grid">
             <div class="col-6 flex gap-2">
               <img
                 src="https://www.coolmate.me/images/product-detail/return.svg"
@@ -178,7 +186,7 @@
               />
               <span>Đến tận nơi nhận hàng trả, hoàn tiền trong 24h</span>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -207,17 +215,21 @@ import type { Product } from "@/types";
 import { getProduct } from "@/api/product";
 import { formatVND } from "@/common";
 import { addItemToCart as addItemToCartApi } from "@/api/cart";
+import Button from 'primevue/button';
+import type { CartItem } from "@/types";
 const route = useRoute();
 const id = String(route.params.id);
 const product = ref<Product>();
 const toast = useToast();
 const quantity = ref(1);
 const addItemToCart = () => {
-  addItemToCartApi({
+  const cartItem: Partial<CartItem> = {
     sku: currentVariant.value?.sku || "",
     quantity: quantity.value,
     price: currentPrice.value,
-  }).then(() => {
+    productDetails: product.value || undefined,
+  };
+  addItemToCartApi(cartItem as CartItem).then(() => {
     toast.add({
       severity: "success",
       summary: "Đã thêm vào giỏ hàng",
@@ -378,13 +390,18 @@ const zoomImage = () => {
 
 const zoomDialogVisible = ref(false);
 
+const openChat = () => {
+  // TODO: Mở popup chat hoặc chuyển hướng sang trang chat với shop
+  alert('Chức năng chat với shop sẽ được phát triển!');
+};
+
 onMounted(async () => {
   window.scrollTo(0, 0);
   product.value = await getProduct(id);
   
   // Map images from API
   if (product.value?.images && product.value.images.length > 0) {
-    thumbnails.value = product.value.images.map(img => img);
+    thumbnails.value = product.value.images.filter(img => typeof img === 'string');
     selectedImage.value = thumbnails.value[0];
   } else {
     thumbnails.value = [
