@@ -18,32 +18,33 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import ProductCard from '@/components/ProductCard.vue';
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  // ... các trường khác nếu cần
-}
+import type { Product } from '@/types/index';
 
 // Dữ liệu mẫu, sau này sẽ lấy từ API hoặc localStorage
 const favoriteProducts = ref<Product[]>([
   {
-    id: 1,
+    id: '1',
     name: 'Áo thun basic',
     price: 199000,
-    image: 'https://via.placeholder.com/300',
+    images: ['https://via.placeholder.com/300'],
+    description: 'Mô tả sản phẩm',
+    rating: 4.5,
+    status: 'available',
+    variants: [],
   },
   {
-    id: 2,
+    id: '2',
     name: 'Quần jean slim fit',
     price: 499000,
-    image: 'https://via.placeholder.com/300',
+    images: ['https://via.placeholder.com/300'],
+    description: 'Mô tả sản phẩm',
+    rating: 4.0,
+    status: 'available',
+    variants: [],
   },
 ]);
 
-const removeFromFavorites = (id: number) => {
+const removeFromFavorites = (id: string) => {
   favoriteProducts.value = favoriteProducts.value.filter(p => p.id !== id);
 };
 </script> 

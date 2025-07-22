@@ -29,17 +29,6 @@
     <div class="px-24 mt-4">
         <p class="text-2xl font-bold">Kết quả</p>
         <div class="!grid grid-cols-5 gap-4 mt-4">
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
         </div>
         <Button label="Xem thêm" class="!rounded-full mt-4 !px-4 !mx-auto !block !bg-black !text-white !border-black" />
     </div>

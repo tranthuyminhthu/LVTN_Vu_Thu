@@ -432,6 +432,7 @@ import {
   type Product,
 } from "@/api/product";
 import LoadingGlobal from "@/components/LoadingGlobal.vue";
+import type { DataTableSortEvent } from 'primevue/datatable';
 
 // Toast setup
 const toast = useToast();
@@ -511,9 +512,9 @@ const filteredProducts = computed(() => {
 });
 
 // Sort handler for DataTable
-const onSort = (event: any) => {
-  sortField.value = event.sortField;
-  sortOrder.value = event.sortOrder;
+const onSort = (event: DataTableSortEvent) => {
+  sortField.value = typeof event.sortField === 'string' ? event.sortField : '';
+  sortOrder.value = typeof event.sortOrder === 'number' ? event.sortOrder : 1;
 };
 
 // Get status severity for Tag component
@@ -589,13 +590,11 @@ const handleImageUpload = (event: Event) => {
     imagesPreview.value = [];
     // Process each selected file
     Array.from(target.files).forEach((file: File) => {
-      // Lưu file gốc vào mảng images để upload
-      currentProduct.value.images?.push(file);
-      // Tạo preview cho UI
+      // Tạo preview cho UI và lưu vào images
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageData = e.target?.result as string;
-        imagesPreview.value.push(imageData);
+        currentProduct.value.images?.push(imageData);
       };
       reader.readAsDataURL(file);
     });
