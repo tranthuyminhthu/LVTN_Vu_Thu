@@ -47,8 +47,14 @@
       </div>
       <div class="flex gap-4 col-6">
         <div class="flex-1">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+              <img src="" alt="" class="!w-10 !h-10 rounded-full">
+              <span class="font-bold">Adidas</span>
+            </div>
+            <i class="pi pi-heart"></i>
+          </div>
           <p class="font-bold text-3xl">{{ product?.name || "..." }}</p>
-          <!-- <p class="">100% Cotton</p> -->
           <span class="flex gap-2 my-2"
             ><Rating :model-value="product?.rating" readonly />(39)</span
           >

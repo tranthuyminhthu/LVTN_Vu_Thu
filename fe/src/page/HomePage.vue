@@ -1,14 +1,4 @@
 <script setup lang="ts">
-import AppHeader from "../components/AppHeader.vue";
-import AppBanner from "../components/AppBanner.vue";
-import HomeSection2 from "@/components/HomeSection3.vue";
-import HomeSection3 from "@/components/HomeSection3.vue";
-import HomeSection4 from "@/components/HomeSection4.vue";
-import HomeSection5 from "@/components/HomeSection5.vue";
-import HomeSection6 from "@/components/HomeSection6.vue";
-import HomeSection7 from "@/components/HomeSection7.vue";
-import AppFooter from "@/components/AppFooter.vue";
-import AuthTest from "@/components/AuthTest.vue";
 // Import Swiper Vue.js components
 import { Swiper, SwiperSlide } from "swiper/vue";
 import type { Swiper as SwiperType } from "swiper";
