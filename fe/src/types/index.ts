@@ -17,6 +17,13 @@ export interface Product {
     status: string;
     variants: ProductVariant[];
     images?: (string | File)[];
+    vendorInfo: VendorInfo;
+}
+
+interface VendorInfo {
+  id: string;
+  name: string;
+  image: string;
 }
 
 export interface CreateProductPayload {
@@ -114,4 +121,44 @@ export interface UserInfo {
   role: string[];
   dob: string | null;
   phone?: string | null;
+}
+
+export interface CalculateFeeItem {
+  name: string;
+  quantity: number;
+  height: number;
+  weight: number;
+  length: number;
+  width: number;
+}
+
+export interface CalculateFeePayload {
+  from_district_id: number;
+  from_ward_code: string;
+  service_id: number;
+  service_type_id?: number | null;
+  to_district_id: number;
+  to_ward_code: string;
+  height?: number;
+  length?: number;
+  weight: number;
+  width?: number;
+  insurance_value?: number;
+  cod_failed_amount?: number;
+  coupon?: string | null;
+  items?: CalculateFeeItem[];
+}
+
+export interface GetServicePayload {
+  from_district: number;
+  to_district: number;
+  shop_id: number;
+}
+
+export interface OrderAcceptedRequestDto {
+  orderId: string;
+  serviceId: number;
+  note: string;
+  requiredNote: string;
+  content: string;
 }

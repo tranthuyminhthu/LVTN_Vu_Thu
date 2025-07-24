@@ -1,3 +1,4 @@
+import type { OrderAcceptedRequestDto } from "@/types";
 import axiosInstance from ".";
 
 export interface OrderItem {
@@ -23,6 +24,11 @@ export interface Order {
   note: string | null;
   timeline: unknown;
   image: string;
+  senderDistrictId: number;
+  senderWardCode: string;
+  receiverDistrictId: number;
+  receiverWardCode: string;
+  shopId: number;
 }
 
 export const getOrders = async (page = 0, size = 10, status?: string) => {
@@ -49,6 +55,10 @@ export interface CreateOrderPayload {
   receiverPhone: string;
   receiverEmail: string;
   note?: string;
+  fee: number;
+  vendorId: string;
+  receiverDistrictId: number;
+  receiverWardCode: string;
 }
 
 export const createOrder = async (orderData: CreateOrderPayload) => {
@@ -65,3 +75,13 @@ export const getMyOrders = async (page = 0, size = 10) => {
     throw error;
   }
 }
+
+export const getOrderDetail = async (orderId: string) => {
+  const res = await axiosInstance.get(`/api/order/${orderId}`);
+  return res.data;
+};
+
+export const acceptOrder = async (data: OrderAcceptedRequestDto) => {
+  const res = await axiosInstance.put(`/api/order/accepted`, data);
+  return res.data;
+};

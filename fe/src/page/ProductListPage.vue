@@ -190,7 +190,8 @@ const loadProducts = async () => {
     loading.value = true;
     const params: ProductQueryParams = {
       page: productsPagination.value.page,
-      size: productsPagination.value.size
+      size: productsPagination.value.size,
+      status: 'ACCEPTED'
     };
     
     const response = await getProducts(params);

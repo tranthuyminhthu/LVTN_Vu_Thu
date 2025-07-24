@@ -3,7 +3,7 @@
   <footer class="bg-gray-100 border-t border-gray-200 py-6 mt-8">
     <div class="!max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4">
       <div class="flex items-center gap-2">
-        <img src="/public/favicon.ico" alt="Logo" class="w-8 h-8" />
+        <img src="/favicon.ico" alt="Logo" class="w-8 h-8" />
         <span class="font-bold text-lg text-gray-700">My App</span>
       </div>
       <nav class="flex gap-6 text-gray-600 text-sm">

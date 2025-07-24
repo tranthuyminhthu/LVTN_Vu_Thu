@@ -71,7 +71,7 @@ const handleLogin = async () => {
   <div class="!mt-header max-w-primary mx-auto pt-12">
     <div class="grid">
       <div class="col !pr-12 pt-8">
-        <h1 class="font-bold text-2xl mb-4 text-center">Log in to your account</h1>
+        <h1 class="font-bold text-2xl mb-4 text-center">Đăng nhập</h1>
         <FloatLabel variant="in" class="mb-2 w-full">
           <InputText
             id="username"
@@ -92,7 +92,7 @@ const handleLogin = async () => {
           />
           <label for="password">Password</label>
         </FloatLabel>
-        <div class="flex items-center justify-between my-4">
+        <!-- <div class="flex items-center justify-between my-4">
           <div class="flex items-center gap-2">
             <Checkbox
               v-model="rememberMe"
@@ -100,20 +100,20 @@ const handleLogin = async () => {
               name="remember"
               value="remember"
             />
-            <label for="remember" class="text-sm">Remember me</label>
+            <label for="remember" class="text-sm">Nhớ tôi</label>
           </div>
           <router-link to="/forgot-password" class="text-primary text-sm underline">
             Forgot password?
           </router-link>
-        </div>
+        </div> -->
         <Button
-          label="Log in"
+          label="Đăng nhập"
           icon="pi pi-sign-in"
           class="w-full"
           @click="handleLogin"
         />
         <Divider align="center">
-          <b>Or log in with</b>
+          <b>Hoặc đăng nhập với</b>
         </Divider>
         <div class="flex items-center justify-center gap-4 mt-4">
           <Button variant="outlined" class="!border-2">
@@ -139,8 +139,8 @@ const handleLogin = async () => {
           </Button>
         </div>
         <p class="bg-gray-100 p-4 text-center rounded mt-4">
-          Don't have an account?
-          <router-link to="/signup" class="text-primary font-bold underline">Sign up</router-link>
+          Chưa có tài khoản?
+          <router-link to="/signup" class="text-primary font-bold underline">Đăng ký</router-link>
         </p>
       </div>
 
@@ -153,3 +153,12 @@ const handleLogin = async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+:deep(.p-password) {
+  width: 100% !important;
+}
+:deep(.p-password .p-inputtext) {
+  width: 100% !important;
+}
+</style>

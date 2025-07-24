@@ -119,3 +119,25 @@ export const createProductComment = async (payload: {
     throw error;
   }
 };
+
+// Accept products (duyệt sản phẩm)
+export const acceptProducts = async (ids: (string|number)[]) => {
+  try {
+    const response = await axiosInstance.post('/api/products/accepted', ids);
+    return response.data;
+  } catch (error) {
+    console.error('Error accepting products:', error);
+    throw error;
+  }
+};
+
+// Reject products (từ chối sản phẩm)
+export const rejectProducts = async (ids: (string|number)[]) => {
+  try {
+    const response = await axiosInstance.post('/api/products/rejected', ids);
+    return response.data;
+  } catch (error) {
+    console.error('Error rejecting products:', error);
+    throw error;
+  }
+};
