@@ -223,6 +223,8 @@ import { formatVND } from "@/common";
 import { addItemToCart as addItemToCartApi } from "@/api/cart";
 import Button from 'primevue/button';
 import type { CartItem } from "@/types";
+import { createConversation } from "@/api/chat";
+import router from "@/router";
 const route = useRoute();
 const id = String(route.params.id);
 const product = ref<Product>();
@@ -396,9 +398,9 @@ const zoomImage = () => {
 
 const zoomDialogVisible = ref(false);
 
-const openChat = () => {
-  // TODO: Mở popup chat hoặc chuyển hướng sang trang chat với shop
-  alert('Chức năng chat với shop sẽ được phát triển!');
+const openChat = async () => {
+  const res = await createConversation([product.value?.vendorInfo.id || "", "197170"]);
+  router.push({name: "chat", params: {id: res.id}})
 };
 
 onMounted(async () => {

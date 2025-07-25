@@ -74,7 +74,6 @@ export function useAuth() {
 
   // Xóa tokens và user info
   const clearAuth = () => {
-    console.log('Clearing auth state');
     accessToken.value = null
     refreshToken.value = null
     user.value = null
@@ -124,7 +123,6 @@ export function useAuth() {
     clearAuth()
   }
 
-  // Cập nhật access token (khi refresh token được sử dụng)
   const updateAccessToken = (newAccessToken: string) => {
     console.log('Updating access token:', !!newAccessToken);
     accessToken.value = newAccessToken

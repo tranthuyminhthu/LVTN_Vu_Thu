@@ -94,7 +94,7 @@ export interface Conversation {
 }
 
 export interface Message {
-  id: number;
+  id: string;
   text: string;
   sender: 'user' | 'other';
   timestamp: Date;
@@ -161,4 +161,17 @@ export interface OrderAcceptedRequestDto {
   note: string;
   requiredNote: string;
   content: string;
+}
+
+export interface SocketChatMessageResponse {
+  id: string;
+  conversationId: string;
+  isMe: boolean;
+  message: string;
+  sender: {
+    userId: string;
+    username: string;
+    avatar: string | null;
+  };
+  createdDate: string;
 }

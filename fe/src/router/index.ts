@@ -220,7 +220,7 @@ const router = createRouter({
       component: OnlyHeaderLayout,
       children: [
         {
-          path: "",
+          path: ":id?",
           name: "chat",
           component: ChatPage,
         },

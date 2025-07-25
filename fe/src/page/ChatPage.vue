@@ -20,9 +20,9 @@
                 <div class="text-xs text-gray-500 truncate max-w-[10rem]">
                   {{ (allMessages[chat.id]?.length > 0) ? allMessages[chat.id][allMessages[chat.id].length-1].text : 'Bắt đầu cuộc trò chuyện' }}
                 </div>
-              </div>
-              <div class="text-xs text-gray-400 ml-2 min-w-[3.5rem] text-right">
-                {{ formatDate(chat.updatedAt) }}
+                <div class="text-xs text-gray-400 ml-2 min-w-[3.5rem] text-right">
+                  {{ formatDate(allMessages[chat.id]?.[allMessages[chat.id].length-1]?.timestamp || chat.updatedAt) }}
+                </div>
               </div>
             </button>
           </div>
@@ -111,8 +111,9 @@ import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Editor from 'primevue/editor'
 import { getMyConversations, sendMessageToConversation, getMessagesByConversationId } from '@/api/chat'
-import type { Conversation, Message, ApiMessageResponse } from '@/types'
+import type { Conversation, Message, ApiMessageResponse, SocketChatMessageResponse } from '@/types'
 import { useSocketIO } from '@/composables/useSocketIO'
+import { useRoute, useRouter } from 'vue-router'
 
 const chatList = ref<Conversation[]>([])
 const loading = ref(false)
@@ -120,7 +121,7 @@ const selectedChat = ref<Conversation | null>(null)
 const newMessage = ref('')
 const messagesContainer = ref<HTMLDivElement | null>(null)
 
-// Mock messages per chat
+// Danh sách tin nhắn cho từng phòng chat
 const allMessages = ref<Record<string, Message[]>>({})
 
 // Socket.IO connection
@@ -131,27 +132,43 @@ const {
   error: wsError, 
   connect: connectSocketIO, 
   disconnect: disconnectSocketIO, 
-  sendMessage: sendSocketIOMessage 
 } = useSocketIO()
 
 // Xử lý tin nhắn Socket.IO
-const handleSocketIOMessage = (message: Record<string, unknown>) => {
-  if (message.type === 'NEW_MESSAGE' && typeof message.conversationId === 'string') {
-    // Thêm tin nhắn mới vào conversation tương ứng
-    const newMsg: Message = {
-      id: Date.now(),
-      text: (message.message as string) || '',
-      sender: (message.sender as string) === 'user' ? 'user' : 'other',
-      timestamp: new Date((message.timestamp as string) || Date.now())
+const handleSocketIOMessage = (message: any) => {
+  let plainMsg: SocketChatMessageResponse;
+  if (typeof message === 'string') {
+    try {
+      plainMsg = JSON.parse(message);
+    } catch (e) {
+      console.error('Cannot parse message string', message);
+      return;
     }
-    
-    if (!allMessages.value[message.conversationId]) {
-      allMessages.value[message.conversationId] = []
+  } else if (message.data && typeof message.data === 'string') {
+    try {
+      plainMsg = JSON.parse(message.data);
+    } catch (e) {
+      console.error('Cannot parse message.data string', message.data);
+      return;
     }
-    allMessages.value[message.conversationId].push(newMsg)
-    
-    // Scroll to bottom nếu đang ở conversation này
-    if (selectedChat.value?.id === message.conversationId) {
+  } else {
+    plainMsg = message.data ? message.data : message;
+  }
+
+  const convId = plainMsg['conversationId']
+  const newMsg: Message = {
+    id: plainMsg.id,
+    text: plainMsg.message,
+    sender: plainMsg.isMe ? 'user' : 'other',
+    timestamp: new Date(plainMsg.createdDate)
+  }
+  if (!allMessages.value[convId]) {
+    allMessages.value[convId] = []
+  }
+  if (!allMessages.value[convId].some(m => m.id === newMsg.id)) {
+    allMessages.value[convId].push(newMsg)
+    allMessages.value = { ...allMessages.value }
+    if (selectedChat.value && selectedChat.value.id === convId) {
       scrollToBottom()
     }
   }
@@ -171,19 +188,23 @@ const currentMessages = computed(() => {
 })
 
 const selectChat = async (chat: Conversation) => {
+  if (route.params.id !== chat.id) {
+    router.push({ name: route.name || 'ChatPage', params: { ...route.params, id: chat.id } })
+  }
   selectedChat.value = chat
   // Lấy danh sách tin nhắn thật từ API
   try {
-    const messages = await getMessagesByConversationId(chat.id)
-    // Map dữ liệu API về Message[]
-    allMessages.value[chat.id] = messages.map((m: ApiMessageResponse) => ({
+    const res = await getMessagesByConversationId(chat.id)
+    allMessages.value[chat.id] = res.map((m: ApiMessageResponse) => ({
       id: m.id,
       text: m.message,
       sender: m.isMe ? 'user' : 'other',
       timestamp: new Date(m.createdDate)
     }))
+    allMessages.value = { ...allMessages.value }
   } catch (e) {
     allMessages.value[chat.id] = []
+    allMessages.value = { ...allMessages.value }
   }
   scrollToBottom()
 }
@@ -199,8 +220,10 @@ const formatTime = (timestamp: string | Date): string => {
   }).format(date)
 }
 
-const formatDate = (timestamp: string | Date): string => {
+const formatDate = (timestamp: string | Date | undefined | null): string => {
+  if (!timestamp) return ''
   const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp
+  if (isNaN(date.getTime())) return ''
   return new Intl.DateTimeFormat('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -213,31 +236,13 @@ const formatDate = (timestamp: string | Date): string => {
 const sendMessage = async () => {
   if (newMessage.value.trim() && selectedChat.value) {
     try {
-      // Gửi message qua API
-      const res = await sendMessageToConversation({
+      await sendMessageToConversation({
         conversationId: selectedChat.value.id,
         message: newMessage.value
       })
-      
-      // Gửi message qua Socket.IO nếu đã kết nối
-      if (isConnected.value) {
-        sendSocketIOMessage('NEW_MESSAGE', {
-          type: 'NEW_MESSAGE',
-          data: {
-            conversationId: selectedChat.value.id,
-            message: newMessage.value,
-            sender: 'user'
-          },
-          conversationId: selectedChat.value.id,
-          message: newMessage.value,
-          sender: 'user',
-          timestamp: new Date().toISOString()
-        })
-      }
-      
       // Thêm message vào allMessages
       const msg: Message = {
-        id: Date.now(),
+        id: Date.now().toString(),
         text: newMessage.value,
         sender: 'user',
         timestamp: new Date(),
@@ -246,10 +251,10 @@ const sendMessage = async () => {
         allMessages.value[selectedChat.value.id] = []
       }
       allMessages.value[selectedChat.value.id].push(msg)
+      allMessages.value = { ...allMessages.value }
       newMessage.value = ''
       scrollToBottom()
     } catch (error) {
-      // Xử lý lỗi gửi tin nhắn (có thể show toast hoặc log)
       console.error('Gửi tin nhắn thất bại:', error)
     }
   }
@@ -266,20 +271,25 @@ watch(currentMessages, () => {
   scrollToBottom()
 })
 
+const route = useRoute()
+const router = useRouter()
+const routeChatId = computed(() => route.params.id as string | undefined)
+
 const fetchConversations = async () => {
   loading.value = true
   try {
     const data = await getMyConversations()
     chatList.value = data
-    // Khởi tạo allMessages cho mỗi conversation
-    data.forEach((conv: Conversation) => {
-      if (!allMessages.value[conv.id]) {
-        allMessages.value[conv.id] = []
+    // Tự động chọn cuộc trò chuyện theo id trên route nếu có
+    if (routeChatId.value) {
+      const found = data.find((c: Conversation) => c.id == routeChatId.value)
+      if (found) {
+        await selectChat(found)
+      } else if (data.length > 0) {
+        await selectChat(data[0])
       }
-    })
-    // Tự động chọn cuộc trò chuyện đầu tiên nếu có
-    if (data.length > 0) {
-      await selectChat(data[0])
+    } else if (data.length > 0) {
+      // await selectChat(data[0])
     }
   } catch (e) {
     // handle error nếu cần
@@ -290,10 +300,8 @@ const fetchConversations = async () => {
 
 onMounted(() => {
   fetchConversations()
-  // Kết nối Socket.IO
   connectSocketIO(8099)
   
-  // Thiết lập listeners sau khi kết nối
   watch(isConnected, (connected) => {
     if (connected) {
       setupSocketIOListeners()
@@ -302,17 +310,25 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // Disconnect Socket.IO khi thoát component
   console.log('Disconnecting Socket.IO...')
   disconnectSocketIO()
 })
 
 const getAvatar = (conv: Conversation) => {
-  // Ưu tiên conversationAvatar, nếu không có thì lấy avatar của participant khác mình, nếu không có thì avatar mặc định
   if (conv.conversationAvatar) return conv.conversationAvatar
   const other = conv.participants.find(p => p.avatar)
   return other?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(conv.conversationName)
 }
+
+watch(routeChatId, async (newId) => {
+  if (!chatList.value.length) return
+  if (newId) {
+    const found = chatList.value.find((c: Conversation) => c.id == newId)
+    if (found) {
+      await selectChat(found)
+    }
+  }
+})
 
 </script>
 
