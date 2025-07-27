@@ -32,7 +32,7 @@ export interface Order {
 }
 
 export const getOrders = async (page = 0, size = 10, status?: string) => {
-  let url = `/api/order?page=${page}&size=${size}`;
+  let url = `/api/order/vendors?page=${page}&size=${size}`;
   if (status) {
     url += `&status=${status}`;
   }
@@ -81,7 +81,14 @@ export const getOrderDetail = async (orderId: string) => {
   return res.data;
 };
 
-export const acceptOrder = async (data: OrderAcceptedRequestDto) => {
-  const res = await axiosInstance.put(`/api/order/accepted`, data);
+export const changeOrderStatusToDelivering= async (data: OrderAcceptedRequestDto) => {
+  const res = await axiosInstance.put(`/api/order/delivering`, data);
+  return res.data;
+};
+
+export const changeOrderStatusToAccepted = async (orderId: string) => {
+  const res = await axiosInstance.put(`/api/order/accepted` , {
+    orderId: orderId
+  });
   return res.data;
 };

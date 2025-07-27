@@ -14,22 +14,30 @@
     </div>
 
     <!-- Tabs for product status -->
-    <TabView v-model:activeIndex="activeTab">
-      <TabPanel header="Tất cả">
+    <TabView v-model:activeIndex="activeTab" @tab-change="onTabChange">
+      <TabPanel
+        v-for="(status, idx) in productStatuses"
+        :key="status.value ?? 'all'"
+        :header="status.label"
+      >
         <DataTable
-          :value="filteredProducts"
+          :value="products"
           :paginator="true"
-          :rows="itemsPerPage"
+          :rows="rowsPerPage"
+          :totalRecords="totalElements"
+          :first="page * rowsPerPage"
           :rowsPerPageOptions="[5, 10, 20, 50]"
           :loading="loading"
           :globalFilterFields="['name', 'description']"
           :sortField="sortField"
           :sortOrder="sortOrder"
           @sort="onSort"
+          @page="onPage"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
           responsiveLayout="scroll"
           class="p-datatable-sm"
+          :lazy="true"
         >
           <!-- Các cột như cũ -->
           <Column field="name" header="Sản phẩm" :sortable="true" style="min-width: 200px">
@@ -43,205 +51,22 @@
               </div>
             </template>
           </Column>
-          <Column field="price" header="Giá" :sortable="true" style="min-width: 120px">
-            <template #body="{ data }">
-              <span class="font-medium">{{ formatPrice(data.price) }}</span>
-            </template>
-          </Column>
           <Column field="stock" header="Tồn kho" :sortable="true" style="min-width: 100px">
             <template #body="{ data }">
               <span class="font-medium">{{ getTotalStock(data) }}</span>
             </template>
           </Column>
-          <Column field="rating" header="Đánh giá" :sortable="true" style="min-width: 100px">
+          <Column field="rating" header="Đánh giá" :sortable="true" style="min-width: 150px;">
             <template #body="{ data }">
-              <div class="flex items-center">
-                <span class="font-medium mr-1">{{ data.rating }}</span>
+              <div class="flex items-center gap-2">
+                <span class="font-medium min-w-[20px] ">{{ data.rating || 0 }}</span>
                 <i class="pi pi-star-fill text-yellow-400"></i>
               </div>
             </template>
           </Column>
-          <Column field="status" header="Trạng thái" :sortable="true" style="min-width: 120px">
+          <Column field="viewCount" header="Lượt xem" :sortable="true" style="min-width: 100px">
             <template #body="{ data }">
-              <Tag :value="mapStatusName(data.status)" :severity="mapStatusSeverity(data.status)" />
-            </template>
-          </Column>
-          <Column header="Thao tác" style="min-width: 120px">
-            <template #body="{ data }">
-              <div class="flex gap-2">
-                <Button icon="pi pi-pencil" class="p-button-text p-button-sm p-button-info" @click="editProduct(data)" v-tooltip.top="'Chỉnh sửa'" />
-                <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="deleteProduct(data)" v-tooltip.top="'Xóa'" />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </TabPanel>
-      <TabPanel header="Đang chờ xác nhận">
-        <DataTable
-          :value="filteredProductsByStatus('IN_PROGRESS')"
-          :paginator="true"
-          :rows="itemsPerPage"
-          :rowsPerPageOptions="[5, 10, 20, 50]"
-          :loading="loading"
-          :globalFilterFields="['name', 'description']"
-          :sortField="sortField"
-          :sortOrder="sortOrder"
-          @sort="onSort"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-          currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
-          responsiveLayout="scroll"
-          class="p-datatable-sm"
-        >
-          <!-- Các cột như trên -->
-          <Column field="name" header="Sản phẩm" :sortable="true" style="min-width: 200px">
-            <template #body="{ data }">
-              <div class="flex items-center">
-                <Image :src="getProductImage(data)" :alt="data.name" class="!w-14 !h-14 rounded-lg !object-cover mr-3" preview :pt="{ image: '!w-14 !h-14 rounded-lg !object-cover' }" />
-                <div>
-                  <div class="font-medium text-gray-900">{{ data.name }}</div>
-                  <div class="text-sm text-gray-500">{{ data.category || 'Chưa phân loại' }}</div>
-                </div>
-              </div>
-            </template>
-          </Column>
-          <Column field="price" header="Giá" :sortable="true" style="min-width: 120px">
-            <template #body="{ data }">
-              <span class="font-medium">{{ formatPrice(data.price) }}</span>
-            </template>
-          </Column>
-          <Column field="stock" header="Tồn kho" :sortable="true" style="min-width: 100px">
-            <template #body="{ data }">
-              <span class="font-medium">{{ getTotalStock(data) }}</span>
-            </template>
-          </Column>
-          <Column field="rating" header="Đánh giá" :sortable="true" style="min-width: 100px">
-            <template #body="{ data }">
-              <div class="flex items-center">
-                <span class="font-medium mr-1">{{ data.rating }}</span>
-                <i class="pi pi-star-fill text-yellow-400"></i>
-              </div>
-            </template>
-          </Column>
-          <Column field="status" header="Trạng thái" :sortable="true" style="min-width: 120px">
-            <template #body="{ data }">
-              <Tag :value="mapStatusName(data.status)" :severity="mapStatusSeverity(data.status)" />
-            </template>
-          </Column>
-          <Column header="Thao tác" style="min-width: 120px">
-            <template #body="{ data }">
-              <div class="flex gap-2">
-                <Button icon="pi pi-pencil" class="p-button-text p-button-sm p-button-info" @click="editProduct(data)" v-tooltip.top="'Chỉnh sửa'" />
-                <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="deleteProduct(data)" v-tooltip.top="'Xóa'" />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </TabPanel>
-      <TabPanel header="Đã duyệt">
-        <DataTable
-          :value="filteredProductsByStatus('ACCEPTED')"
-          :paginator="true"
-          :rows="itemsPerPage"
-          :rowsPerPageOptions="[5, 10, 20, 50]"
-          :loading="loading"
-          :globalFilterFields="['name', 'description']"
-          :sortField="sortField"
-          :sortOrder="sortOrder"
-          @sort="onSort"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-          currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
-          responsiveLayout="scroll"
-          class="p-datatable-sm"
-        >
-          <!-- Các cột như trên -->
-          <Column field="name" header="Sản phẩm" :sortable="true" style="min-width: 200px">
-            <template #body="{ data }">
-              <div class="flex items-center">
-                <Image :src="getProductImage(data)" :alt="data.name" class="!w-14 !h-14 rounded-lg !object-cover mr-3" preview :pt="{ image: '!w-14 !h-14 rounded-lg !object-cover' }" />
-                <div>
-                  <div class="font-medium text-gray-900">{{ data.name }}</div>
-                  <div class="text-sm text-gray-500">{{ data.category || 'Chưa phân loại' }}</div>
-                </div>
-              </div>
-            </template>
-          </Column>
-          <Column field="price" header="Giá" :sortable="true" style="min-width: 120px">
-            <template #body="{ data }">
-              <span class="font-medium">{{ formatPrice(data.price) }}</span>
-            </template>
-          </Column>
-          <Column field="stock" header="Tồn kho" :sortable="true" style="min-width: 100px">
-            <template #body="{ data }">
-              <span class="font-medium">{{ getTotalStock(data) }}</span>
-            </template>
-          </Column>
-          <Column field="rating" header="Đánh giá" :sortable="true" style="min-width: 100px">
-            <template #body="{ data }">
-              <div class="flex items-center">
-                <span class="font-medium mr-1">{{ data.rating }}</span>
-                <i class="pi pi-star-fill text-yellow-400"></i>
-              </div>
-            </template>
-          </Column>
-          <Column field="status" header="Trạng thái" :sortable="true" style="min-width: 120px">
-            <template #body="{ data }">
-              <Tag :value="mapStatusName(data.status)" :severity="mapStatusSeverity(data.status)" />
-            </template>
-          </Column>
-          <Column header="Thao tác" style="min-width: 120px">
-            <template #body="{ data }">
-              <div class="flex gap-2">
-                <Button icon="pi pi-pencil" class="p-button-text p-button-sm p-button-info" @click="editProduct(data)" v-tooltip.top="'Chỉnh sửa'" />
-                <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="deleteProduct(data)" v-tooltip.top="'Xóa'" />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </TabPanel>
-      <TabPanel header="Bị từ chối">
-        <DataTable
-          :value="filteredProductsByStatus('REJECTED')"
-          :paginator="true"
-          :rows="itemsPerPage"
-          :rowsPerPageOptions="[5, 10, 20, 50]"
-          :loading="loading"
-          :globalFilterFields="['name', 'description']"
-          :sortField="sortField"
-          :sortOrder="sortOrder"
-          @sort="onSort"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-          currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
-          responsiveLayout="scroll"
-          class="p-datatable-sm"
-        >
-          <!-- Các cột như trên -->
-          <Column field="name" header="Sản phẩm" :sortable="true" style="min-width: 200px">
-            <template #body="{ data }">
-              <div class="flex items-center">
-                <Image :src="getProductImage(data)" :alt="data.name" class="!w-14 !h-14 rounded-lg !object-cover mr-3" preview :pt="{ image: '!w-14 !h-14 rounded-lg !object-cover' }" />
-                <div>
-                  <div class="font-medium text-gray-900">{{ data.name }}</div>
-                  <div class="text-sm text-gray-500">{{ data.category || 'Chưa phân loại' }}</div>
-                </div>
-              </div>
-            </template>
-          </Column>
-          <Column field="price" header="Giá" :sortable="true" style="min-width: 120px">
-            <template #body="{ data }">
-              <span class="font-medium">{{ formatPrice(data.price) }}</span>
-            </template>
-          </Column>
-          <Column field="stock" header="Tồn kho" :sortable="true" style="min-width: 100px">
-            <template #body="{ data }">
-              <span class="font-medium">{{ getTotalStock(data) }}</span>
-            </template>
-          </Column>
-          <Column field="rating" header="Đánh giá" :sortable="true" style="min-width: 100px">
-            <template #body="{ data }">
-              <div class="flex items-center">
-                <span class="font-medium mr-1">{{ data.rating }}</span>
-                <i class="pi pi-star-fill text-yellow-400"></i>
-              </div>
+              <span class="font-medium">{{ data.viewCount || 0 }}</span>
             </template>
           </Column>
           <Column field="status" header="Trạng thái" :sortable="true" style="min-width: 120px">
@@ -513,7 +338,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, defineComponent } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import Dialog from "primevue/dialog";
 import Toast from "primevue/toast";
 import DataTable from "primevue/datatable";
@@ -537,6 +362,13 @@ import type { DataTableSortEvent } from 'primevue/datatable';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 
+const productStatuses = [
+  { label: 'Tất cả', value: undefined },
+  { label: 'Đang chờ xác nhận', value: 'IN_PROGRESS' },
+  { label: 'Đã duyệt', value: 'ACCEPTED' },
+  { label: 'Bị từ chối', value: 'REJECTED' },
+];
+
 // Toast setup
 const toast = useToast();
 
@@ -545,14 +377,16 @@ const loading = ref(false);
 const isSaving = ref(false);
 
 // Pagination state
-const first = ref(0);
-const itemsPerPage = ref(10);
+const page = ref(0);
+const rowsPerPage = ref(10);
+const totalElements = ref(0);
+const products = ref<Product[]>([]);
+const currentStatus = ref<string | undefined>(undefined);
+const activeTab = ref(0);
 
 // Sorting state
 const sortField = ref("name");
 const sortOrder = ref(1);
-
-const products = ref<Product[]>([]);
 
 const searchQuery = ref("");
 const sortBy = ref("name");
@@ -560,7 +394,6 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const currentProduct = ref<Partial<Product>>({});
 const imagesPreview = ref<string[]>([]);
-const activeTab = ref(0);
 
 // Sort options for dropdown
 const sortOptions = ref([
@@ -573,15 +406,21 @@ const sortOptions = ref([
 
 // Reset pagination when search or sort changes
 watch([searchQuery, sortBy], () => {
-  first.value = 0;
+  page.value = 0;
 });
 
-// Load products on component mount
-const loadProducts = async () => {
+// Load products with pagination and status
+const loadProducts = async (status = currentStatus.value, pageNum = page.value, pageSize = rowsPerPage.value) => {
   loading.value = true;
   try {
-    const response = await getMyProducts();
-    products.value = response;
+    const params: any = { page: pageNum, size: pageSize };
+    if (status) params.status = status;
+    const response = await getMyProducts(params);
+    products.value = response.products;
+    totalElements.value = response.totalElements;
+    currentStatus.value = status;
+    page.value = response.page ?? pageNum;
+    rowsPerPage.value = response.size ?? pageSize;
   } catch (error) {
     console.error("Error loading products:", error);
     toast.add({
@@ -598,6 +437,21 @@ const loadProducts = async () => {
 onMounted(() => {
   loadProducts();
 });
+
+// Khi đổi tab
+const onTabChange = (event: { index: number }) => {
+  const status = productStatuses[event.index].value;
+  currentStatus.value = status;
+  page.value = 0;
+  loadProducts(status, 0, rowsPerPage.value);
+};
+
+// Khi chuyển trang
+const onPage = (event: { page: number; rows: number }) => {
+  page.value = event.page;
+  rowsPerPage.value = event.rows;
+  loadProducts(currentStatus.value, event.page, event.rows);
+};
 
 const filteredProducts = computed(() => {
   let filtered = [...products.value];

@@ -37,6 +37,7 @@ export interface Product {
   category?: string;
   views?: number;
   sales?: number;
+  viewCount?: number;
 }
 
 export interface ProductResponse {
@@ -65,9 +66,9 @@ export const getProduct = async (id: string) => {
   return response.data;
 };
 
-export const getMyProducts = async () => {
+export const getMyProducts = async (params: ProductQueryParams = {}): Promise<ProductResponse> => {
   try {
-    const response = await axiosInstance.get("/api/products/me");
+    const response = await axiosInstance.get("/api/products/me", { params });
     return Promise.resolve(response.data);
   } catch (error) {
     return Promise.reject(error);

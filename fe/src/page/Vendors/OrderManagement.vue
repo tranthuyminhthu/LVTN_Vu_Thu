@@ -88,8 +88,15 @@
             >
               <template #body="slotProps">
                 <button
+                  v-if="currentStatus === 'PENDING'"
+                  @click="handleClickAccept(slotProps.data)"
+                  class="text-green-600 hover:text-green-900 mr-3"
+                >
+                  <i class="pi pi-check"></i>
+                </button>
+                <button
                   @click="viewOrderDetails(slotProps.data)"
-                  class="text-blue-600 hover:text-blue-900 mr-3"
+                  class="text-blue-600 hover:text-blue-900"
                 >
                   <i class="pi pi-eye"></i>
                 </button>
@@ -129,6 +136,7 @@
                         type="radio"
                         value="KHONGCHOXEMHANG"
                         v-model="shippingNoteTypeEdit"
+                        :disabled="!canProcessOrder(selectedOrder)"
                       />
                       <span>Không cho xem hàng</span>
                     </label>
@@ -137,6 +145,7 @@
                         type="radio"
                         value="CHOXEMHANGKHONGTHU"
                         v-model="shippingNoteTypeEdit"
+                        :disabled="!canProcessOrder(selectedOrder)"
                         checked
                       />
                       <span>Cho xem hàng không cho thử</span>
@@ -146,19 +155,21 @@
                         type="radio"
                         value="CHOTHUHANG"
                         v-model="shippingNoteTypeEdit"
+                        :disabled="!canProcessOrder(selectedOrder)"
                       />
                       <span>Cho thử hàng</span>
                     </label>
                   </div>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-600 font-semibold mb-2">
+                  <p class="text-sm text-gray-600 font-semibold mb-2" >
                     Ghi chú
                   </p>
-                  <textarea
+                  <Textarea
+                  :disabled="!canProcessOrder(selectedOrder)"
                     class="w-full border rounded p-2 min-h-[80px]"
                     v-model="shippingNoteDetailEdit"
-                  ></textarea>
+                  ></Textarea>
                 </div>
               </div>
             </div>
@@ -258,13 +269,14 @@ import type {
   Order as OrderBase,
   OrderItem as OrderItemBase,
 } from "@/api/order";
-import { getOrders, getOrderDetail, acceptOrder } from "@/api/order";
+import { getOrders, getOrderDetail, changeOrderStatusToDelivering, changeOrderStatusToAccepted } from "@/api/order";
 import Image from "primevue/image";
 import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
 import { getService } from "@/api/ghn";
 import type { OrderAcceptedRequestDto } from "@/types";
 import LoadingGlobal from "@/components/LoadingGlobal.vue";
+import { Textarea } from "primevue";
 
 // Extend OrderItem to include image
 interface OrderItem extends OrderItemBase {
@@ -274,7 +286,7 @@ interface OrderItem extends OrderItemBase {
 const orderStatuses = [
   { value: "PENDING", label: "Chờ xử lý" },
   { value: "PROCESSING", label: "Đang xử lý" },
-  { value: "SHIPPED", label: "Đang giao hàng" },
+  { value: "DELIVERING", label: "Đang giao hàng" },
   { value: "DELIVERED", label: "Đã giao hàng" },
   { value: "CANCELLED", label: "Đã hủy" },
   { value: "REFUNDED", label: "Đã hoàn trả" },
@@ -368,9 +380,11 @@ const getStatusClass = (status: string) => {
 };
 
 const canProcessOrder = (order: OrderBase) => {
-  const statusFlow = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"];
-  const currentIndex = statusFlow.indexOf(order.status);
-  return currentIndex >= 0 && currentIndex < statusFlow.length - 1;
+  if (order.status === "PROCESSING") {
+    return true;
+  } else {
+    return false;
+  }
 };
 
 const getNextActionLabel = (status: string) => {
@@ -420,7 +434,7 @@ const processOrder = async (order: OrderBase) => {
       requiredNote: shippingNoteTypeEdit.value,
       content: "Đơn hàng quần áo",
     };
-    await acceptOrder(orderAcceptedRequest.value as OrderAcceptedRequestDto);
+    await changeOrderStatusToDelivering(orderAcceptedRequest.value as OrderAcceptedRequestDto);
     toast.add({
       severity: "success",
       summary: "Thành công",
@@ -457,5 +471,10 @@ const getStatusDate = (order: OrderBase, status: string) => {
   // Assuming statusHistory is not part of the Order interface from API
   // If it were, you would iterate through it to find the date for the specific status
   return "-";
+};
+
+const handleClickAccept = async (order: OrderBase) => {
+  await changeOrderStatusToAccepted(order.orderId);
+  fetchOrders();
 };
 </script>

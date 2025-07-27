@@ -49,38 +49,22 @@
         <div class="flex-1">
           <div class="flex justify-between items-center mb-4">
             <div class="flex items-center gap-2">
-              <img src="" alt="" class="!w-10 !h-10 rounded-full">
-              <span class="font-bold">Adidas</span>
+              <img :src="product?.vendorInfo.image" alt="" class="!w-10 !h-10 rounded-full">
+              <span class="font-bold">{{ product?.vendorInfo.name }}</span>
             </div>
             <i class="pi pi-heart"></i>
           </div>
           <p class="font-bold text-3xl">{{ product?.name || "..." }}</p>
           <span class="flex gap-2 my-2"
-            ><Rating :model-value="product?.rating" readonly />(39)</span
+            ><Rating :model-value="product?.rating" readonly />({{ product?.rating }})</span
           >
           <div class="my-2">
-            <del class="text-[#c4c4c4]">{{ formatVND(currentPrice) }}</del>
+            <!-- <del class="text-[#c4c4c4]">{{ formatVND(currentPrice) }}</del> -->
           </div>
           <p class="font-bold text-2xl flex gap-4 align-items-center">
             <span class="font-bold text-2xl">{{ formatVND(currentPrice) }}</span>
-            <Badge>-11%</Badge>
+            <!-- <Badge>-11%</Badge> -->
           </p>
-          <!-- <div class="flex gap-4 my-4">
-            <span>Mã giảm giá</span>
-            <span
-              style="
-                background-image: url(&quot;https://media.coolmate.me/image/September2024/mceclip0_126.png&quot;);
-              "
-              class="py-1 px-2 text-[#fa6a18] bg-cover w-[108px] rounded flex justify-content-center bg-no-repeat"
-            >
-              Giảm 40k
-            </span>
-          </div> -->
-          <!-- <img
-            src="https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/April2025/mceclip0_54.jpg"
-            alt=""
-            class="rounded-md"
-          /> -->
           <p class="my-2">
             <span>Màu sắc: </span
             ><span class="font-bold">{{ selectedColor }}</span>
@@ -95,8 +79,12 @@
             <span>Kích thước: </span
             ><span class="font-bold">{{ selectedSize }}</span>
           </p>
-          <div class="flex flex-wrap gap-4 mb-4">
+          <div class="flex flex-wrap gap-4">
             <SizePicker v-model="selectedSizeId" :sizeOptions="availableSizes" />
+          </div>
+          <div class="flex gap-2 my-2">
+            <span>Số lượng còn lại: </span>
+            <span class="font-bold">{{ currentVariant?.stockQuantity }}</span>
           </div>
           <Toast />
           <div class="mb-4 flex gap-2">

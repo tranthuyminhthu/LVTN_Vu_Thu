@@ -237,33 +237,16 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   
-  // // Kiểm tra nếu route yêu cầu authentication
-  // if (to.meta.requiresAuth) {
-  //   if (!authStore.user) {
-  //     // Nếu chưa đăng nhập, redirect về login
-  //     next('/login');
-  //     return;
-  //   }
-    
-  //   // Kiểm tra role nếu có yêu cầu
-  //   if (to.meta.roles && Array.isArray(to.meta.roles)) {
-  //     const hasRequiredRole = to.meta.roles.some((role: string) => 
-  //       authStore.hasRole(role)
-  //     );
-      
-  //     if (!hasRequiredRole) {
-  //       // Nếu không có role phù hợp, redirect về home
-  //       next('/');
-  //       return;
-  //     }
-  //   }
-  // }
-  
-  // // Nếu đã đăng nhập và cố gắng truy cập login/signup, redirect về home
-  // if (authStore.user && (to.name === 'login' || to.name === 'signup')) {
-  //   next('/');
-  //   return;
-  // }
+  console.log('=== ROUTER NAVIGATION ===');
+  console.log('To:', to.path);
+  console.log('To Name:', to.name);
+  console.log('To Meta:', to.meta);
+  console.log('From:', from.path);
+  console.log('Auth Store:', authStore);
+  console.log('User:', authStore.user);
+  console.log('Is Authenticated:', !!authStore.user);
+  console.log('User Role:', authStore.user?.role);
+  console.log('========================');
   
   next();
 });
