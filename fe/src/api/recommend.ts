@@ -5,7 +5,7 @@ export const getRecommend = async (imageFile: File) => {
     formData.append('image', imageFile);
     try {
         const response = await axiosInstance.post(
-            `/api/recommend/recommend_by_image`,
+            `/api/products/recommendations`,
             formData,
             {
                 headers: {

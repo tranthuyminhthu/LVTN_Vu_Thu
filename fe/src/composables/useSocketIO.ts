@@ -1,13 +1,10 @@
 import { ref, onUnmounted } from 'vue'
 import { io, Socket } from 'socket.io-client'
+import type { SocketChatMessageResponse } from '@/types'
 
 export interface SocketIOMessage {
-  type: string
-  data: Record<string, unknown>
   conversationId?: string
-  sender?: string
   message?: string
-  timestamp?: string
 }
 
 export function useSocketIO() {
@@ -18,7 +15,6 @@ export function useSocketIO() {
 
   const connect = (port: number = 8099) => {
     if (socket.value?.connected) {
-      console.log('Socket.IO đã được kết nối')
       return
     }
 
@@ -26,7 +22,7 @@ export function useSocketIO() {
     error.value = null
 
     try {
-      const socketUrl = `http://localhost:${port}`
+      const socketUrl = `http://localhost:${port}?token=${localStorage.getItem('accessToken')}`
       socket.value = io(socketUrl, {
         transports: ['websocket', 'polling'],
         timeout: 20000,
@@ -36,42 +32,28 @@ export function useSocketIO() {
       })
 
       socket.value.on('connect', () => {
-        console.log('Socket.IO đã kết nối thành công:', socket.value?.id)
         isConnected.value = true
         isConnecting.value = false
         error.value = null
       })
 
       socket.value.on('disconnect', (reason) => {
-        console.log('Socket.IO đã đóng kết nối:', reason)
         isConnected.value = false
         isConnecting.value = false
       })
 
       socket.value.on('connect_error', (err) => {
-        console.error('Socket.IO connection error:', err)
         error.value = 'Lỗi kết nối Socket.IO'
         isConnected.value = false
         isConnecting.value = false
       })
 
       socket.value.on('reconnect', (attemptNumber) => {
-        console.log('Socket.IO reconnected after', attemptNumber, 'attempts')
         isConnected.value = true
         error.value = null
       })
 
-      // Lắng nghe tin nhắn từ server
-      socket.value.on('message', (message: SocketIOMessage) => {
-        console.log('Nhận tin nhắn Socket.IO:', message)
-      })
-
-      socket.value.on('new_message', (message: SocketIOMessage) => {
-        console.log('Tin nhắn mới từ Socket.IO:', message)
-      })
-
     } catch (e) {
-      console.error('Lỗi tạo Socket.IO:', e)
       error.value = 'Không thể tạo kết nối Socket.IO'
       isConnecting.value = false
     }
@@ -79,7 +61,6 @@ export function useSocketIO() {
 
   const disconnect = () => {
     if (socket.value) {
-      console.log('Disconnecting Socket.IO...')
       // Remove all event listeners
       socket.value.removeAllListeners()
       // Disconnect socket
@@ -96,7 +77,6 @@ export function useSocketIO() {
       socket.value.emit(event, message)
       return true
     } else {
-      console.warn('Socket.IO chưa kết nối')
       return false
     }
   }
@@ -106,7 +86,6 @@ export function useSocketIO() {
       socket.value.emit(event, data)
       return true
     } else {
-      console.warn('Socket.IO chưa kết nối, không thể emit event:', event)
       return false
     }
   }
@@ -136,7 +115,6 @@ export function useSocketIO() {
 
   // Tự động đóng kết nối khi component unmount
   onUnmounted(() => {
-    console.log('useSocketIO: Cleaning up Socket.IO connection...')
     disconnect()
   })
 

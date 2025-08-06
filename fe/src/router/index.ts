@@ -16,18 +16,20 @@ import AddressPage from "@/page/account/AddressPage.vue";
 import OrderSuccessPage from "@/page/OrderSuccessPage.vue";
 import VoucherPage from "@/page/account/VoucherPage.vue";
 import SpotlightPage from "@/page/SpotlightPage.vue";
-import OrderDetailPage from "@/page/OrderDetailPage.vue";
+import OrderDetailPage from "@/page/account/OrderDetailPage.vue";
 import MessagePage from "@/page/MessagePage.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 import DashboardPage from "@/page/AdminPage/DashboardPage.vue";
 import UserPage from "@/page/AdminPage/UserPage.vue";
 import ProductPageAdmin from "@/page/AdminPage/ProductPage.vue";
 import OrderPageAdmin from "@/page/AdminPage/OrderPage.vue";
+import NotificationPage from "@/page/AdminPage/NotificationPage.vue";
 import FinancePage from "@/page/AdminPage/FinancePage.vue";
 import VendorLayout from "@/layouts/VendorLayout.vue";
 import StoreManagement from "@/page/Vendors/StoreManagement.vue";
 import ProductManagement from "@/page/Vendors/ProductManagement.vue";
 import OrderManagement from "@/page/Vendors/OrderManagement.vue";
+
 import FinanceManagement from "@/page/Vendors/FinanceManagement.vue";
 import AdvertisementManagement from "@/page/Vendors/AdvertisementManagement.vue";
 import CustomerSupport from "@/page/Vendors/CustomerSupport.vue";
@@ -35,6 +37,7 @@ import AIRecommendationPage from "@/page/AIRecommendationPage.vue";
 import FavoriteProductsPage from "@/page/account/FavoriteProductsPage.vue";
 import ChatPage from "@/page/ChatPage.vue";
 import OnlyHeaderLayout from "@/layouts/OnlyHeaderLayout.vue";
+import ResetPasswordPage from "@/page/ResetPasswordPage.vue";
 import { useAuthStore } from "@/store";
 
 const router = createRouter({
@@ -134,6 +137,11 @@ const router = createRouter({
       component: SignUpPage,
     },
     {
+      path: "/reset-password",
+      name: "reset-password",
+      component: ResetPasswordPage,
+    },
+    {
       path: "/product/:id",
       component: HeaderLayout,
       children: [
@@ -169,6 +177,11 @@ const router = createRouter({
           component: OrderPageAdmin,
         },
         {
+          path: "notifications",
+          name: "admin-notifications",
+          component: NotificationPage,
+        },
+        {
           path: "finance",
           name: "finance",
           component: FinancePage,
@@ -198,6 +211,7 @@ const router = createRouter({
           name: "vendor-orders",
           component: OrderManagement,
         },
+
         {
           path: "finance",
           name: "vendor-finance",
@@ -220,7 +234,7 @@ const router = createRouter({
       component: OnlyHeaderLayout,
       children: [
         {
-          path: "",
+          path: ":id?",
           name: "chat",
           component: ChatPage,
         },
@@ -235,35 +249,18 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
+  // const authStore = useAuthStore();
   
-  // // Kiểm tra nếu route yêu cầu authentication
-  // if (to.meta.requiresAuth) {
-  //   if (!authStore.user) {
-  //     // Nếu chưa đăng nhập, redirect về login
-  //     next('/login');
-  //     return;
-  //   }
-    
-  //   // Kiểm tra role nếu có yêu cầu
-  //   if (to.meta.roles && Array.isArray(to.meta.roles)) {
-  //     const hasRequiredRole = to.meta.roles.some((role: string) => 
-  //       authStore.hasRole(role)
-  //     );
-      
-  //     if (!hasRequiredRole) {
-  //       // Nếu không có role phù hợp, redirect về home
-  //       next('/');
-  //       return;
-  //     }
-  //   }
-  // }
-  
-  // // Nếu đã đăng nhập và cố gắng truy cập login/signup, redirect về home
-  // if (authStore.user && (to.name === 'login' || to.name === 'signup')) {
-  //   next('/');
-  //   return;
-  // }
+  // console.log('=== ROUTER NAVIGATION ===');
+  // console.log('To:', to.path);
+  // console.log('To Name:', to.name);
+  // console.log('To Meta:', to.meta);
+  // console.log('From:', from.path);
+  // console.log('Auth Store:', authStore);
+  // console.log('User:', authStore.user);
+  // console.log('Is Authenticated:', !!authStore.user);
+  // console.log('User Role:', authStore.user?.role);
+  // console.log('========================');
   
   next();
 });

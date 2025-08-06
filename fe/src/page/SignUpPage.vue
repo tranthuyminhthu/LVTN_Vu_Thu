@@ -4,7 +4,7 @@
   <div class="!mt-header max-w-primary mx-auto pt-12">
     <div class="grid">
       <div class="col !pr-12 pt-8">
-        <h1 class="font-bold text-2xl mb-4 text-center">Sign up with email</h1>
+        <h1 class="font-bold text-2xl mb-4 text-center">Đăng ký</h1>
         <FloatLabel variant="in" class="mb-2 w-full">
           <InputText
             id="username"
@@ -41,13 +41,13 @@
           <label for="isVendor">Đăng ký làm người bán</label>
         </div>
         <Button
-          label="Continue with email"
+          label="Đăng ký"
           icon="pi pi-envelope"
           class="w-full"
           @click="handleSignUp"
         />
         <Divider align="center">
-          <b>Other sign up options</b>
+          <b>Hoặc đăng nhập với</b>
         </Divider>
         <div class="flex items-center justify-center gap-4 mt-4">
           <Button variant="outlined" class="!border-2">
@@ -73,13 +73,13 @@
           </Button>
         </div>
         <p class="text-center text-xs my-4">
-          By signing up, you agree to our
-          <a href="/" class="text-primary underline">Terms of Use</a> and
-          <a href="/" class="text-primary underline">Privacy Policy</a>
+          Bằng cách đăng ký, bạn đồng ý với
+          <a href="/" class="text-primary underline">Điều khoản sử dụng</a> và
+          <a href="/" class="text-primary underline">Chính sách bảo mật</a>
         </p>
         <p class="bg-gray-100 p-4 text-center rounded">
-          Already have an account?
-          <router-link to="/login" class="text-primary font-bold underline">Log in</router-link>
+          Đã có tài khoản?
+          <router-link to="/login" class="text-primary font-bold underline">Đăng nhập</router-link>
         </p>
       </div>
 
@@ -133,7 +133,7 @@ const handleSignUp = async () => {
     });
     
     // Chuyển hướng sau khi đăng ký thành công
-    router.push("/home");
+    router.push({ name: 'login' });
   } catch (error) {
     // Hiển thị toast lỗi
     toast.add({
@@ -145,3 +145,11 @@ const handleSignUp = async () => {
   }
 };
 </script>
+<style scoped>
+:deep(.p-password) {
+  width: 100% !important;
+}
+:deep(.p-password .p-inputtext) {
+  width: 100% !important;
+}
+</style>

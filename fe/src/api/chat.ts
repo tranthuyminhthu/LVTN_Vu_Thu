@@ -29,3 +29,15 @@ export const getMessagesByConversationId = async (conversationId: string) => {
     throw error;
   }
 };
+
+export const createConversation = async (data: Array<string>) => {
+  try {
+    const res = await axiosInstance.post("/api/chat/conversations", {
+      participantIds: data,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error creating conversation:", error);
+    throw error;
+  }
+};

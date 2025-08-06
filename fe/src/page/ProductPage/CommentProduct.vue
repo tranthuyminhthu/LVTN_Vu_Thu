@@ -354,13 +354,7 @@ const fetchComments = async () => {
     const data = await getProductComments(props.productId);
     comments.value = data;
   } catch (error) {
-    console.error('Error fetching comments:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Lỗi',
-      detail: 'Không thể tải danh sách đánh giá',
-      life: 3000
-    });
+
   } finally {
     loading.value = false;
   }
