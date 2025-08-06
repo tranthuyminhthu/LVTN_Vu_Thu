@@ -1,4 +1,5 @@
 <template>
+  
   <div class="relative p-8">
     <div class="grid">
       <div class="col-6">
@@ -248,12 +249,6 @@
                 <span>{{ category.name }}</span>
                 <span v-if="category.sub" class="flex items-center gap-1">
                   <span class="text-xs">{{ category.sub }}</span>
-                  <img
-                    :src="category.imageSub"
-                    alt=""
-                    class="w-4 h-4"
-                    v-if="category.imageSub"
-                  />
                 </span>
               </div>
             </label>
@@ -271,6 +266,7 @@
             :disabled="cartItems.length === 0"
           />
         </div>
+        <LoadingGlobal :isLoading="isLoading">
         <div v-if="loading" class="flex justify-center items-center py-8">
           <div class="loading-spinner"></div>
           <span class="ml-2">Đang tải giỏ hàng...</span>
@@ -278,6 +274,7 @@
         <div v-else-if="cartItems.length === 0" class="text-center py-8">
           <p class="text-gray-500">Giỏ hàng trống</p>
         </div>
+        
         <DataTable
           v-else
           :value="cartItems"
@@ -312,11 +309,18 @@
             <template #body="slotProps">
               <div class="flex flex-col">
                 <router-link
+                  v-if="slotProps.data.productDetails?.id"
                   :to="{ name: 'product', params: { id: slotProps.data.productDetails.id } }"
                   class="font-semibold text-blue-600 hover:underline"
                 >
                   {{ slotProps.data.productDetails?.name || 'Đang tải...' }}
                 </router-link>
+                <span
+                  v-else
+                  class="font-semibold text-gray-500 cursor-not-allowed"
+                >
+                  {{ slotProps.data.productDetails?.name || 'Đang tải...' }}
+                </span>
                 <span class="text-sm text-gray-500">
                   {{ getVariantInfo(slotProps.data.sku) }}
                 </span>
@@ -358,6 +362,7 @@
             </template>
           </Column>
         </DataTable>
+      </LoadingGlobal>
         <!-- <div
           class="my-2 flex gap-4 overflow-x-auto w-full whitespace-nowrap pb-2"
         >
@@ -498,12 +503,13 @@ import {
 import AddressModal from "./CartPage/AddressModal.vue";
 import { calculateFee } from "@/api/ghn";
 import type { CalculateFeePayload } from "@/types";
+import LoadingGlobal from "@/components/LoadingGlobal.vue";
 
 const toast = useToast();
 const confirm = useConfirm();
 const router = useRouter();
 
-const loading = ref(false);
+const isLoading = ref(false);
 const cartData = ref<Cart | null>(null);
 const cartItems = shallowRef<CartItemWithProduct[]>([]);
 
@@ -741,15 +747,14 @@ watch(selectedWard, (ward) => {
 });
 
 const handlePayment = async () => {
+  isLoading.value = true;
   if (!validateForm()) return;
 
-  // Chuẩn bị dữ liệu đơn hàng
   const orderPayload: CreateOrderPayload = {
     items: selectedProducts.value.map((item) => {
       let image: string | undefined = undefined;
       const img = item.productDetails?.images?.[0];
       if (typeof img === "string") image = img;
-      // Nếu là File thì bỏ qua hoặc lấy ''
       return {
         cartItemId: item.id,
         productSku: item.sku,
@@ -762,8 +767,8 @@ const handlePayment = async () => {
     shippingAddress: address.value,
     paymentMethod:
       selectedCategory.value === "Thanh toán khi nhận hàng"
-        ? "CASH"
-        : selectedCategory.value,
+        ? "COD"
+        : "VNPAY",
     receiverName: text1.value,
     receiverPhone: phone.value,
     receiverEmail: email.value,
@@ -775,14 +780,13 @@ const handlePayment = async () => {
   };
 
   try {
-    await createOrder(orderPayload);
-    toast.add({
-      severity: "success",
-      summary: "Thành công",
-      detail: "Đơn hàng đã được tạo thành công!",
-      life: 2000,
-    });
-    router.push("/order-success");
+    const res = await createOrder(orderPayload);
+    const paymentUrl = res.paymentUrl;
+    if (paymentUrl) {
+      window.location.href = paymentUrl;
+    } else {
+      router.push("/order-success");
+    }
   } catch (error) {
     toast.add({
       severity: "error",
@@ -790,24 +794,41 @@ const handlePayment = async () => {
       detail: "Không thể tạo đơn hàng. Vui lòng thử lại.",
       life: 3000,
     });
+  } finally {
+    isLoading.value = false;
   }
 };
 
 
 
 const loadCart = async () => {
-  if (loading.value) return;
+  if (isLoading.value) return;
 
-  loading.value = true;
+  isLoading.value = true;
   try {
     const response = await getCart();
     cartData.value = response;
-    cartItems.value = markRaw(response.items);
+    
+    // Ensure items array exists and has valid structure
+    if (response && response.items && Array.isArray(response.items)) {
+      cartItems.value = markRaw(response.items.map(item => ({
+        ...item,
+        productDetails: item.productDetails || {
+          id: '',
+          name: 'Sản phẩm không xác định',
+          images: [],
+          vendorInfo: { id: '', name: '', image: '' }
+        }
+      })));
+    } else {
+      cartItems.value = markRaw([]);
+    }
 
     // Clear selection when cart is reloaded
     selectedProducts.value = [];
   } catch (error) {
     console.log(error);
+    cartItems.value = markRaw([]);
     toast.add({
       severity: "error",
       summary: "Lỗi",
@@ -815,7 +836,7 @@ const loadCart = async () => {
       life: 3000,
     });
   } finally {
-    loading.value = false;
+    isLoading.value = false;
   }
 };
 

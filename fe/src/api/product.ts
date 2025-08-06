@@ -142,3 +142,56 @@ export const rejectProducts = async (ids: (string|number)[]) => {
     throw error;
   }
 };
+
+export const addFavorite = async (productId: number) => {
+  try {
+    const response = await axiosInstance.post(`/api/products/favorites`, { productId });
+    return response.data;
+  } catch (error) {
+    console.error('Error adding favorite:', error);
+    throw error;
+  }
+};
+
+export const removeFavorite = async (productId: number) => {
+  try {
+    const response = await axiosInstance.delete(`/api/products/favorites/${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error removing favorite:', error);
+    throw error;
+  }
+};
+
+// Update product variants
+export const updateProductVariants = async (productId: number, variants: ProductVariant[]) => {
+  try {
+    const response = await axiosInstance.put(`/api/products/${productId}/variants`, variants);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating product variants:', error);
+    throw error;
+  }
+};
+
+// Delete product
+export const deleteProduct = async (productId: number) => {
+  try {
+    const response = await axiosInstance.delete(`/api/products/${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+};
+
+export const updateProduct = async (productId: number, name: string, description: string) => {
+  try {
+    const response = await axiosInstance.put(`/api/products/${productId}`, { name, description });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating product:', error);
+    throw error;
+  }
+};
+

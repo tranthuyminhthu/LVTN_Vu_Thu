@@ -12,7 +12,6 @@
           {{ status.label }}
         </template>
         <div class="bg-white rounded-lg shadow-sm">
-          <!-- Đã xóa filter -->
           <DataTable
             :value="orders"
             class="w-full"
@@ -29,11 +28,11 @@
             <Column
               field="orderId"
               header="Mã đơn hàng"
-              body-class="px-6 py-4 whitespace-nowrap font-medium"
+              body-class="whitespace-nowrap font-medium"
             />
             <Column
               header="Khách hàng"
-              body-class="px-6 py-4 whitespace-nowrap"
+              body-class="whitespace-nowrap"
             >
               <template #body="slotProps">
                 <div class="text-sm text-gray-900">
@@ -47,7 +46,7 @@
             <Column
               field="createdAt"
               header="Ngày đặt"
-              body-class="px-6 py-4 whitespace-nowrap"
+              body-class="whitespace-nowrap"
             >
               <template #body="slotProps">
                 <div class="text-sm text-gray-900">
@@ -58,7 +57,7 @@
             <Column
               field="totalAmount"
               header="Tổng tiền"
-              body-class="px-6 py-4 whitespace-nowrap"
+              body-class="whitespace-nowrap"
             >
               <template #body="slotProps">
                 <div class="text-sm text-gray-900">
@@ -69,7 +68,7 @@
             <Column
               field="status"
               header="Trạng thái"
-              body-class="px-6 py-4 whitespace-nowrap"
+              body-class="whitespace-nowrap"
             >
               <template #body="slotProps">
                 <span
@@ -83,23 +82,65 @@
               </template>
             </Column>
             <Column
-              header="Thao tác"
-              body-class="px-6 py-4 whitespace-nowrap text-sm font-medium"
+              field="paymentStatus"
+              header="Trạng thái thanh toán"
+              body-class="whitespace-nowrap"
             >
               <template #body="slotProps">
-                <button
-                  v-if="currentStatus === 'PENDING'"
-                  @click="handleClickAccept(slotProps.data)"
-                  class="text-green-600 hover:text-green-900 mr-3"
+                <span
+                  :class="[
+                    'px-2 py-1 text-xs font-medium rounded-full',
+                    getPaymentStatusClass(slotProps.data.paymentStatus),
+                  ]"
                 >
-                  <i class="pi pi-check"></i>
-                </button>
-                <button
-                  @click="viewOrderDetails(slotProps.data)"
-                  class="text-blue-600 hover:text-blue-900"
+                  {{ getPaymentStatusLabel(slotProps.data.paymentStatus) }}
+                </span>
+              </template>
+            </Column>
+            <Column
+              field="paymentMethod"
+              header="Phương thức thanh toán"
+              body-class="whitespace-nowrap"
+            >
+              <template #body="slotProps">
+                <span
+                  :class="[
+                    'px-2 py-1 text-xs font-medium rounded-full',
+                    getPaymentMethodClass(slotProps.data.paymentMethod),
+                  ]"
                 >
-                  <i class="pi pi-eye"></i>
-                </button>
+                  {{ getPaymentMethodLabel(slotProps.data.paymentMethod) }}
+                </span>
+              </template>
+            </Column>
+            <Column
+              header="Thao tác"
+              body-class="whitespace-nowrap text-sm font-medium"
+            >
+              <template #body="slotProps">
+                <div class="flex items-center justify-center gap-2">
+                  <button
+                    v-if="currentStatus === 'PENDING' && canShowAcceptButton(slotProps.data)"
+                    @click="handleClickAccept(slotProps.data)"
+                    class="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                    title="Xác nhận đơn hàng"
+                  >
+                    <i class="pi pi-check"></i>
+                  </button>
+                  <button
+                    v-else-if="currentStatus === 'PENDING' && !canShowAcceptButton(slotProps.data)"
+                    class="w-8 h-8 flex items-center justify-center"
+                  >
+                    <!-- Placeholder để giữ căn chỉnh -->
+                  </button>
+                  <button
+                    @click="viewOrderDetails(slotProps.data)"
+                    class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                    title="Xem chi tiết"
+                  >
+                    <i class="pi pi-eye"></i>
+                  </button>
+                </div>
               </template>
             </Column>
           </DataTable>
@@ -118,9 +159,6 @@
     >
       <LoadingGlobal :isLoading="loadingDetail">
         <div class="mt-3">
-          <div class="flex justify-between items-center mb-4">
-            <!-- Đã có header của Dialog, có thể bỏ phần này nếu muốn -->
-          </div>
           <div v-if="selectedOrder" class="space-y-4">
             <!-- Lưu ý giao hàng & Ghi chú -->
             <div class="p-4 rounded-lg shadow border border-gray-200 mb-2">
@@ -268,7 +306,7 @@ import Column from "primevue/column";
 import type {
   Order as OrderBase,
   OrderItem as OrderItemBase,
-} from "@/api/order";
+} from "@/types";
 import { getOrders, getOrderDetail, changeOrderStatusToDelivering, changeOrderStatusToAccepted } from "@/api/order";
 import Image from "primevue/image";
 import { useToast } from "primevue/usetoast";
@@ -278,18 +316,16 @@ import type { OrderAcceptedRequestDto } from "@/types";
 import LoadingGlobal from "@/components/LoadingGlobal.vue";
 import { Textarea } from "primevue";
 
-// Extend OrderItem to include image
-interface OrderItem extends OrderItemBase {
-  image?: string;
-}
+// Use OrderItem directly from types
+type OrderItem = OrderItemBase;
 
 const orderStatuses = [
   { value: "PENDING", label: "Chờ xử lý" },
   { value: "PROCESSING", label: "Đang xử lý" },
   { value: "DELIVERING", label: "Đang giao hàng" },
-  { value: "DELIVERED", label: "Đã giao hàng" },
   { value: "CANCELLED", label: "Đã hủy" },
   { value: "REFUNDED", label: "Đã hoàn trả" },
+  { value: "RECEIVED", label: "Đã nhận hàng" },
 ];
 
 const orders = ref<OrderBase[]>([]);
@@ -379,12 +415,58 @@ const getStatusClass = (status: string) => {
   return classes[status] || "bg-gray-100 text-gray-800";
 };
 
+const getPaymentStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    UNPAID: "Chưa thanh toán",
+    PAID: "Đã thanh toán",
+    REFUNDED: "Đã hoàn trả",
+  };
+  return labels[status] || status;
+};
+
+const getPaymentStatusClass = (status: string) => {
+  const classes: Record<string, string> = {
+    UNPAID: "bg-yellow-100 text-yellow-800",
+    PAID: "bg-green-100 text-green-800",
+    REFUNDED: "bg-red-100 text-red-800",
+  };
+  return classes[status] || "bg-gray-100 text-gray-800";
+};
+
+const getPaymentMethodLabel = (method: string) => {
+  const labels: Record<string, string> = {
+    CASH: "Tiền mặt",
+    BANK_TRANSFER: "Chuyển khoản",
+    ONLINE_PAYMENT: "Thanh toán online",
+    VNPAY: "VNPay",
+  };
+  return labels[method] || method;
+};
+
+const getPaymentMethodClass = (method: string) => {
+  const classes: Record<string, string> = {
+    CASH: "bg-blue-100 text-blue-800",
+    BANK_TRANSFER: "bg-purple-100 text-purple-800",
+    ONLINE_PAYMENT: "bg-green-100 text-green-800",
+    VNPAY: "bg-orange-100 text-orange-800",
+  };
+  return classes[method] || "bg-gray-100 text-gray-800";
+};
+
 const canProcessOrder = (order: OrderBase) => {
   if (order.status === "PROCESSING") {
     return true;
   } else {
     return false;
   }
+};
+
+const canShowAcceptButton = (order: OrderBase) => {
+  // Không hiển thị nút accept nếu phương thức thanh toán là VNPay và trạng thái thanh toán là PENDING
+  if (order.paymentMethod === "VNPAY" && order.paymentStatus === "PENDING") {
+    return false;
+  }
+  return true;
 };
 
 const getNextActionLabel = (status: string) => {
@@ -409,7 +491,7 @@ const viewOrderDetails = async (order: OrderBase) => {
       shop_id: selectedOrder.value?.shopId || 1,
     });
     serviceId.value = service.data.find(
-      (item: any) => item.short_name === "Hàng nhẹ"
+      (item: { short_name: string; service_id: number }) => item.short_name === "Hàng nhẹ"
     )?.service_id;
     
   } catch (e) {

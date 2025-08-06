@@ -74,11 +74,12 @@
               <Tag :value="mapStatusName(data.status)" :severity="mapStatusSeverity(data.status)" />
             </template>
           </Column>
-          <Column header="Thao tác" style="min-width: 120px">
+          <Column header="Thao tác" style="min-width: 180px">
             <template #body="{ data }">
               <div class="flex gap-2">
-                <Button icon="pi pi-pencil" class="p-button-text p-button-sm p-button-info" @click="editProduct(data)" v-tooltip.top="'Chỉnh sửa'" />
-                <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="deleteProduct(data)" v-tooltip.top="'Xóa'" />
+                <Button icon="pi pi-pencil" class="p-button-text p-button-sm p-button-info" @click="editProduct(data)" v-tooltip.top="'Chỉnh sửa biến thể'" />
+
+                <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="handleDeleteProduct(data)" v-tooltip.top="'Xóa'" />
               </div>
             </template>
           </Column>
@@ -98,8 +99,7 @@
         <template #default>
           <form @submit.prevent="saveProduct" class="space-y-6">
             <!-- Basic Product Info -->
-            <div class="!grid grid-cols-2 gap-4 my-2">
-              <div>
+              <div class="mb-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1"
                   >Tên sản phẩm *</label
                 >
@@ -110,18 +110,6 @@
                   required
                 />
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >Giá cơ bản *</label
-                >
-                <input
-                  v-model="currentProduct.price"
-                  type="number"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1"
@@ -134,6 +122,15 @@
                 required
               ></textarea>
             </div>
+
+            <button
+                v-if="isEditing"
+                type="button"
+                @click="updateProductInfo"
+                class="ml-auto block px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                Cập nhật thông tin
+              </button>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1"
@@ -327,7 +324,7 @@
                 type="submit"
                 class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {{ isEditing ? "Cập nhật" : "Thêm mới" }}
+                {{ isEditing ? "Cập nhật biến thể" : "Thêm mới" }}
               </button>
             </div>
           </form>
@@ -353,14 +350,18 @@ import { useToast } from "primevue/usetoast";
 import {
   createProduct,
   getMyProducts,
+  updateProductVariants,
+  deleteProduct,
   type CreateProductPayload,
-  type ProductVariant,
+  type ProductVariant as ApiProductVariant,
   type Product as ProductBase,
+  updateProduct,
 } from "@/api/product";
 import LoadingGlobal from "@/components/LoadingGlobal.vue";
 import type { DataTableSortEvent } from 'primevue/datatable';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
+import type { Product, ProductVariant } from "@/types";
 
 const productStatuses = [
   { label: 'Tất cả', value: undefined },
@@ -394,6 +395,8 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const currentProduct = ref<Partial<Product>>({});
 const imagesPreview = ref<string[]>([]);
+
+
 
 // Sort options for dropdown
 const sortOptions = ref([
@@ -548,7 +551,15 @@ const openAddProductModal = () => {
 
 const editProduct = (product: Product) => {
   isEditing.value = true;
-  currentProduct.value = { ...product };
+  isSaving.value = false;
+  currentProduct.value = { 
+    ...product,
+    variants: product.variants ? [...product.variants] : []
+  };
+  
+  // Clear image preview when editing
+  imagesPreview.value = [];
+  
   showModal.value = true;
 };
 
@@ -556,6 +567,8 @@ const closeModal = () => {
   showModal.value = false;
   currentProduct.value = {};
 };
+
+
 
 const handleImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -587,12 +600,16 @@ const removeImage = (index: number) => {
   }
 };
 
+
+
 const addVariant = () => {
   if (!currentProduct.value.variants) {
     currentProduct.value.variants = [];
   }
 
   currentProduct.value.variants.push({
+    sku: "",
+    productId: "",
     size: "",
     colorName: "",
     colorHex: "#000000",
@@ -643,30 +660,69 @@ const saveProduct = async () => {
   isSaving.value = true;
 
   if (isEditing.value) {
-    // TODO: Implement API call to update product
-    const index = products.value.findIndex(
-      (p) => p.id === currentProduct.value.id
-    );
-    if (index !== -1) {
-      products.value[index] = {
-        ...products.value[index],
-        ...currentProduct.value,
-      };
+    // Update product variants using API
+    try {
+      const productId = currentProduct.value.id;
+      if (!productId) {
+        throw new Error('Product ID is required for editing');
+      }
+
+      const variants = currentProduct.value.variants || [];
+      // Convert to API format
+      const apiVariants: ApiProductVariant[] = variants.map(variant => ({
+        size: variant.size,
+        colorName: variant.colorName,
+        colorHex: variant.colorHex,
+        price: variant.price,
+        stockQuantity: variant.stockQuantity,
+      }));
+      await updateProductVariants(Number(productId), apiVariants);
+
+      // Update local state
+      const index = products.value.findIndex(
+        (p) => p.id === currentProduct.value.id
+      );
+      if (index !== -1) {
+        products.value[index] = {
+          ...products.value[index],
+          ...currentProduct.value,
+        };
+      }
+
+      toast.add({
+        severity: "success",
+        summary: "Thành công",
+        detail: "Sản phẩm đã được cập nhật",
+        life: 3000,
+      });
+      closeModal();
+      // Reload products to get updated data
+      loadProducts();
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.add({
+        severity: "error",
+        summary: "Lỗi",
+        detail: "Có lỗi xảy ra khi cập nhật sản phẩm. Vui lòng thử lại.",
+        life: 5000,
+      });
     }
-    toast.add({
-      severity: "success",
-      summary: "Thành công",
-      detail: "Sản phẩm đã được cập nhật",
-      life: 3000,
-    });
-    closeModal();
   } else {
     // Prepare payload for API
+    const variants = currentProduct.value.variants || [];
+    const apiVariants: ApiProductVariant[] = variants.map(variant => ({
+      size: variant.size,
+      colorName: variant.colorName,
+      colorHex: variant.colorHex,
+      price: variant.price,
+      stockQuantity: variant.stockQuantity,
+    }));
+    
     const productPayload: CreateProductPayload = {
       name: currentProduct.value.name || "",
       description: currentProduct.value.description || "",
       price: currentProduct.value.price || 0,
-      variants: currentProduct.value.variants || [],
+      variants: apiVariants,
       images: currentProduct.value.images || [],
     };
 
@@ -700,19 +756,65 @@ const saveProduct = async () => {
         isSaving.value = false;
       });
   }
+  isSaving.value = false;
 };
 
-const deleteProduct = (product: Product) => {
+const handleDeleteProduct = async (product: Product) => {
   if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
-    // TODO: Implement API call to delete product
-    products.value = products.value.filter((p) => p.id !== product.id);
+    try {
+      await deleteProduct(Number(product.id));
+      
+      // Remove from local state
+      products.value = products.value.filter((p) => p.id !== product.id);
+
+      toast.add({
+        severity: "success",
+        summary: "Thành công",
+        detail: "Sản phẩm đã được xóa",
+        life: 3000,
+      });
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast.add({
+        severity: "error",
+        summary: "Lỗi",
+        detail: "Có lỗi xảy ra khi xóa sản phẩm. Vui lòng thử lại.",
+        life: 5000,
+      });
+    }
+  }
+};
+
+const updateProductInfo = async () => {
+  isSaving.value = true;
+  
+  try {
+    const productId = currentProduct.value.id;
+    if (!productId) {
+      throw new Error('Product ID is required for updating');
+    }
+
+    // update product
+    await updateProduct(Number(productId), currentProduct.value.name || "", currentProduct.value.description || "");
 
     toast.add({
       severity: "success",
       summary: "Thành công",
-      detail: "Sản phẩm đã được xóa",
+      detail: "Thông tin sản phẩm đã được cập nhật",
       life: 3000,
     });
+    // Don't close modal, just show success message
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Có lỗi xảy ra khi cập nhật thông tin sản phẩm. Vui lòng thử lại.",
+      life: 5000,
+    });
+  } finally {
+    isSaving.value = false;
+    closeModal();
+    loadProducts();
   }
 };
 

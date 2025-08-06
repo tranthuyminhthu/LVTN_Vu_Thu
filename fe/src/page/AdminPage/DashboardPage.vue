@@ -14,7 +14,7 @@
         <div class="flex justify-between items-center">
           <div class="flex flex-col gap-1 mb-2">
             <span class="uppercase">Doanh thu hôm nay</span>
-            <span class="text-xl font-bold">{{ formatCurrency(todayRevenue) }}</span>
+            <span class="text-xl font-bold">{{ formatCurrency(dashboardStats.todayRevenue) }}</span>
           </div>
           <div
             class="rounded-full p-2 !w-12 !h-12 flex items-center justify-center"
@@ -23,7 +23,7 @@
             <i class="pi pi-wallet text-white text-2xl"></i>
           </div>
         </div>
-        <span :class="revenueGrowth >= 0 ? 'text-green-400' : 'text-red-400'" class="mr-2">{{ revenueGrowth >= 0 ? '+' : '' }}{{ revenueGrowth }}%</span>
+        <span :class="dashboardStats.revenueGrowth >= 0 ? 'text-green-400' : 'text-red-400'" class="mr-2">{{ dashboardStats.revenueGrowth >= 0 ? '+' : '' }}{{ dashboardStats.revenueGrowth }}%</span>
         <span class="text-sm">So với hôm qua</span>
       </div>
 
@@ -31,7 +31,7 @@
         <div class="flex justify-between items-center">
           <div class="flex flex-col gap-1 mb-2">
             <span class="uppercase">Đơn hàng hôm nay</span>
-            <span class="text-xl font-bold">{{ todayOrders }}</span>
+            <span class="text-xl font-bold">{{ dashboardStats.todayOrders }}</span>
           </div>
           <div
             class="rounded-full p-2 !w-12 !h-12 flex items-center justify-center"
@@ -40,7 +40,7 @@
             <i class="pi pi-shopping-cart text-white text-2xl"></i>
           </div>
         </div>
-        <span :class="ordersGrowth >= 0 ? 'text-green-400' : 'text-red-400'" class="mr-2">{{ ordersGrowth >= 0 ? '+' : '' }}{{ ordersGrowth }}%</span>
+        <span :class="dashboardStats.ordersGrowth >= 0 ? 'text-green-400' : 'text-red-400'" class="mr-2">{{ dashboardStats.ordersGrowth >= 0 ? '+' : '' }}{{ dashboardStats.ordersGrowth }}%</span>
         <span class="text-sm">So với hôm qua</span>
       </div>
 
@@ -48,7 +48,7 @@
         <div class="flex justify-between items-center">
           <div class="flex flex-col gap-1 mb-2">
             <span class="uppercase">Người dùng mới</span>
-            <span class="text-xl font-bold">{{ newUsers }}</span>
+            <span class="text-xl font-bold">{{ dashboardStats.newUsers }}</span>
           </div>
           <div
             class="rounded-full p-2 !w-12 !h-12 flex items-center justify-center"
@@ -57,24 +57,24 @@
             <i class="pi pi-users text-white text-2xl"></i>
           </div>
         </div>
-        <span :class="usersGrowth >= 0 ? 'text-green-400' : 'text-red-400'" class="mr-2">{{ usersGrowth >= 0 ? '+' : '' }}{{ usersGrowth }}%</span>
+        <span :class="dashboardStats.usersGrowth >= 0 ? 'text-green-400' : 'text-red-400'" class="mr-2">{{ dashboardStats.usersGrowth >= 0 ? '+' : '' }}{{ dashboardStats.usersGrowth }}%</span>
         <span class="text-sm">So với hôm qua</span>
       </div>
 
       <div class="bg-white rounded-lg p-4">
         <div class="flex justify-between items-center">
           <div class="flex flex-col gap-1 mb-2">
-            <span class="uppercase">Tỷ lệ chuyển đổi</span>
-            <span class="text-xl font-bold">{{ conversionRate }}%</span>
+            <span class="uppercase">Tổng doanh thu</span>
+            <span class="text-xl font-bold">{{ formatCurrency(dashboardStats.totalRevenue) }}</span>
           </div>
           <div
             class="rounded-full p-2 !w-12 !h-12 flex items-center justify-center"
             style="background-image: linear-gradient(310deg, #8965e0, #bc65e0)"
           >
-            <i class="pi pi-chart-line text-white text-2xl"></i>
+            <i class="pi pi-money-bill text-white text-2xl"></i>
           </div>
         </div>
-        <span :class="conversionGrowth >= 0 ? 'text-green-400' : 'text-red-400'" class="mr-2">{{ conversionGrowth >= 0 ? '+' : '' }}{{ conversionGrowth }}%</span>
+        <span :class="dashboardStats.revenueGrowth >= 0 ? 'text-green-400' : 'text-red-400'" class="mr-2">{{ dashboardStats.revenueGrowth >= 0 ? '+' : '' }}{{ dashboardStats.revenueGrowth }}%</span>
         <span class="text-sm">So với hôm qua</span>
       </div>
     </div>
@@ -92,13 +92,13 @@
         <div class="col-span-4 bg-white rounded-lg p-4">
           <h3 class="text-lg font-semibold mb-4">Sản phẩm bán chạy</h3>
           <div class="flex flex-col gap-4">
-            <div v-for="product in topProducts" :key="product.id" class="flex items-center gap-3">
-              <img :src="product.image" :alt="product.name" class="w-12 h-12 rounded-lg object-cover" />
+            <div v-for="product in topProducts" :key="product.productSku" class="flex items-center gap-3">
+              <img :src="'https://via.placeholder.com/80x80?text=No+Image'" :alt="product.productName" class="w-12 h-12 rounded-lg object-cover" />
               <div class="flex-1">
-                <p class="font-medium">{{ product.name }}</p>
+                <p class="font-medium">{{ product.productName }}</p>
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-500">{{ product.sold }} đã bán</span>
-                  <span class="font-medium">{{ formatCurrency(product.revenue) }}</span>
+                  <span class="text-sm text-gray-500">{{ product.quantitySold }} đã bán</span>
+                  <span class="font-medium">{{ formatCurrency(product.totalRevenue) }}</span>
                 </div>
               </div>
             </div>
@@ -215,6 +215,18 @@ import Chart from "primevue/chart";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import { ref, onMounted } from "vue";
+import { useToast } from "primevue/usetoast";
+import type { 
+  RevenueStats,
+  TopProduct 
+} from "@/api/vendor";
+import { 
+  getVendorTotalRevenueStats,
+  getVendorRevenueStats,
+  getVendorMonthlyRevenueStats
+} from "@/api/vendor";
+
+const toast = useToast();
 
 interface Product {
   id: string;
@@ -237,70 +249,20 @@ interface ColumnState {
   state: TableState;
 }
 
-onMounted(() => {
-  chartData.value = setChartData();
-  chartOptions.value = setChartOptions();
-  consumptionChartData.value = setConsumptionChartData();
+// Reactive data
+const dashboardStats = ref({
+  todayRevenue: 0,
+  todayOrders: 0,
+  newUsers: 0,
+  conversionRate: 0,
+  totalRevenue: 0,
+  revenueGrowth: 0,
+  ordersGrowth: 0,
+  usersGrowth: 0,
+  conversionGrowth: 0,
 });
 
-const chartData = ref();
-const chartOptions = ref();
-const products = ref<Product[]>([
-  {
-    id: "1000",
-    code: "f230fh0g3",
-    name: "Bamboo Watch",
-    description: "Product Description",
-    image: "bamboo-watch.jpg",
-    price: 65,
-    category: "Accessories",
-    quantity: 24,
-    inventoryStatus: "INSTOCK",
-    rating: 5,
-  },
-]);
-const editingRows = ref([]);
-const statuses = ref([
-  { label: "In Stock", value: "INSTOCK" },
-  { label: "Low Stock", value: "LOWSTOCK" },
-  { label: "Out of Stock", value: "OUTOFSTOCK" },
-]);
-
-const todayRevenue = ref(1500000);
-const todayOrders = ref(45);
-const newUsers = ref(12);
-const conversionRate = ref(3.2);
-
-const revenueGrowth = ref(15);
-const ordersGrowth = ref(-5);
-const usersGrowth = ref(25);
-const conversionGrowth = ref(10);
-
-const consumptionChartData = ref();
-const topProducts = ref([
-  {
-    id: '1',
-    name: 'iPhone 15 Pro Max',
-    image: 'https://example.com/iphone.jpg',
-    sold: 150,
-    revenue: 1500000000
-  },
-  {
-    id: '2',
-    name: 'Samsung Galaxy S24 Ultra',
-    image: 'https://example.com/samsung.jpg',
-    sold: 120,
-    revenue: 1200000000
-  },
-  {
-    id: '3',
-    name: 'MacBook Pro M3',
-    image: 'https://example.com/macbook.jpg',
-    sold: 80,
-    revenue: 800000000
-  }
-]);
-
+const topProducts = ref<TopProduct[]>([]);
 const categoryStats = ref([
   {
     name: 'Điện thoại',
@@ -331,39 +293,150 @@ const categoryStats = ref([
     revenue: 600000000
   }
 ]);
+const revenueStats = ref<RevenueStats | null>(null);
 
-const setChartData = () => {
-  const documentStyle = getComputedStyle(document.documentElement);
+const chartData = ref();
+const chartOptions = ref();
+const products = ref<Product[]>([
+  {
+    id: "1000",
+    code: "f230fh0g3",
+    name: "Bamboo Watch",
+    description: "Product Description",
+    image: "bamboo-watch.jpg",
+    price: 65,
+    category: "Accessories",
+    quantity: 24,
+    inventoryStatus: "INSTOCK",
+    rating: 5,
+  },
+]);
+const editingRows = ref([]);
+const statuses = ref([
+  { label: "In Stock", value: "INSTOCK" },
+  { label: "Low Stock", value: "LOWSTOCK" },
+  { label: "Out of Stock", value: "OUTOFSTOCK" },
+]);
 
-  return {
-    labels: ["January", "February", "March", "April", "May", "June", "July"],
-    datasets: [
-      {
-        label: "First Dataset",
-        data: [65, 59, 80, 81, 56, 55, 40],
-        fill: false,
-        tension: 0.4,
-        borderColor: documentStyle.getPropertyValue("--p-cyan-500"),
-      },
-      {
-        label: "Second Dataset",
-        data: [28, 48, 40, 19, 86, 27, 90],
-        fill: false,
-        borderDash: [5, 5],
-        tension: 0.4,
-        borderColor: documentStyle.getPropertyValue("--p-orange-500"),
-      },
-      {
-        label: "Third Dataset",
-        data: [12, 51, 62, 33, 21, 62, 45],
-        fill: true,
-        borderColor: documentStyle.getPropertyValue("--p-gray-500"),
-        tension: 0.4,
-        backgroundColor: "rgba(107, 114, 128, 0.2)",
-      },
-    ],
-  };
+const consumptionChartData = ref();
+
+// API calls
+const fetchDashboardStats = async () => {
+  try {
+    const stats = await getVendorTotalRevenueStats();
+    
+    // Map vendor stats to dashboard format
+    dashboardStats.value = {
+      todayRevenue: stats.totalRevenue,
+      todayOrders: stats.totalOrders,
+      newUsers: 0, // Not available in vendor API
+      conversionRate: 0, // Not available in vendor API
+      totalRevenue: stats.totalRevenue,
+      revenueGrowth: 0, // Not available in vendor API
+      ordersGrowth: 0, // Not available in vendor API
+      usersGrowth: 0, // Not available in vendor API
+      conversionGrowth: 0, // Not available in vendor API
+    };
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể tải thống kê dashboard',
+      life: 3000
+    });
+  }
 };
+
+const fetchTopProducts = async () => {
+  try {
+    // Get current month data to extract top products
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    
+    const stats = await getVendorRevenueStats(
+      startOfMonth.toISOString(),
+      endOfMonth.toISOString()
+    );
+    
+    if (stats.topProducts) {
+      topProducts.value = stats.topProducts;
+    }
+  } catch (error) {
+    console.error('Error fetching top products:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể tải sản phẩm bán chạy',
+      life: 3000
+    });
+  }
+};
+
+const fetchRevenueStats = async () => {
+  try {
+    // Get last 7 days data for chart
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    const stats = await getVendorRevenueStats(
+      startDate.toISOString(),
+      endDate.toISOString()
+    );
+    revenueStats.value = stats;
+    updateChartData();
+  } catch (error) {
+    console.error('Error fetching revenue stats:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể tải dữ liệu biểu đồ',
+      life: 3000
+    });
+  }
+};
+
+const updateChartData = () => {
+  if (revenueStats.value?.dailyRevenue) {
+    consumptionChartData.value = {
+      labels: revenueStats.value.dailyRevenue.map(stat => {
+        const date = new Date(stat.date);
+        return date.toLocaleDateString('vi-VN', { weekday: 'short' });
+      }),
+      datasets: [
+        {
+          label: 'Đơn hàng',
+          data: revenueStats.value.dailyRevenue.map(stat => stat.orderCount),
+          fill: false,
+          tension: 0.4,
+          borderColor: '#11cdef',
+        },
+        {
+          label: 'Doanh thu (triệu)',
+          data: revenueStats.value.dailyRevenue.map(stat => stat.revenue / 1000000),
+          fill: false,
+          borderDash: [5, 5],
+          tension: 0.4,
+          borderColor: '#fb6340',
+        }
+      ]
+    };
+  }
+};
+
+onMounted(async () => {
+  // Load all dashboard data
+  await Promise.all([
+    fetchDashboardStats(),
+    fetchTopProducts(),
+    fetchRevenueStats()
+  ]);
+  
+  // Set up chart options
+  chartOptions.value = setChartOptions();
+});
+
 const setChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement);
   const textColor = documentStyle.getPropertyValue("--p-text-color");
@@ -404,55 +477,29 @@ const setChartOptions = () => {
     },
   };
 };
+
 const onRowEditSave = (event: { newData: Product; index: number }) => {
   const { newData, index } = event;
-
   products.value[index] = newData;
 };
+
 const getStatusLabel = (status: "INSTOCK" | "LOWSTOCK" | "OUTOFSTOCK") => {
   switch (status) {
     case "INSTOCK":
       return "success";
-
     case "LOWSTOCK":
       return "warn";
-
     case "OUTOFSTOCK":
       return "danger";
-
     default:
       return "secondary";
   }
 };
+
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("vi-VN", {
     style: "currency",
-    currency: "USD",
+    currency: "VND",
   }).format(value);
-};
-
-const setConsumptionChartData = () => {
-  const documentStyle = getComputedStyle(document.documentElement);
-
-  return {
-    labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-    datasets: [
-      {
-        label: 'Đơn hàng',
-        data: [65, 59, 80, 81, 56, 55, 40],
-        fill: false,
-        tension: 0.4,
-        borderColor: documentStyle.getPropertyValue('--p-cyan-500'),
-      },
-      {
-        label: 'Doanh thu',
-        data: [28, 48, 40, 19, 86, 27, 90],
-        fill: false,
-        borderDash: [5, 5],
-        tension: 0.4,
-        borderColor: documentStyle.getPropertyValue('--p-orange-500'),
-      }
-    ]
-  };
 };
 </script>

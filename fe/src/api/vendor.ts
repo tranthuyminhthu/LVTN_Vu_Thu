@@ -1,5 +1,6 @@
 import axiosInstance from './index';
 
+// Vendor Management Types
 export interface Vendor {
   id: string;
   name: string | null;
@@ -27,6 +28,104 @@ export interface VendorQueryParams {
   size?: number;
 }
 
+// Revenue Stats Types
+export interface DailyRevenue {
+  date: string;
+  revenue: number;
+  orderCount: number;
+}
+
+export interface TopProduct {
+  productSku: string;
+  productName: string;
+  quantitySold: number;
+  totalRevenue: number;
+}
+
+export interface MonthlyRevenue {
+  year: number;
+  month: number;
+  revenue: number;
+  orderCount: number;
+}
+
+export interface OrderStatusStat {
+  status: string;
+  count: number;
+  revenue: number;
+}
+
+export interface RevenueStats {
+  vendorId: string;
+  vendorName: string;
+  totalRevenue: number;
+  totalOrders: number;
+  averageOrderValue: number;
+  startDate?: string;
+  endDate?: string;
+  dailyRevenue?: DailyRevenue[];
+  monthlyRevenue?: MonthlyRevenue[];
+  topProducts?: TopProduct[];
+  orderStatusStats?: OrderStatusStat[];
+}
+
+// API functions
+export const getVendorRevenueStats = async (
+  startDate: string,
+  endDate: string
+): Promise<RevenueStats> => {
+  const response = await axiosInstance.get('/api/profile/vendors/me/revenue-stats', {
+    params: { startDate, endDate }
+  });
+  return response.data;
+};
+
+export const getVendorMonthlyRevenueStats = async (
+  year?: number
+): Promise<RevenueStats> => {
+  const params = year ? { year } : {};
+  const response = await axiosInstance.get('/api/profile/vendors/me/revenue-stats/monthly', {
+    params
+  });
+  return response.data;
+};
+
+export const getVendorTotalRevenueStats = async (): Promise<RevenueStats> => {
+  const response = await axiosInstance.get('/api/profile/vendors/me/revenue-stats/total');
+  return response.data;
+};
+
+// Admin functions (for specific vendor)
+export const getVendorRevenueStatsById = async (
+  vendorId: string,
+  startDate: string,
+  endDate: string
+): Promise<RevenueStats> => {
+  const response = await axiosInstance.get(`/api/profile/vendors/${vendorId}/revenue-stats`, {
+    params: { startDate, endDate }
+  });
+  return response.data;
+};
+
+export const getVendorMonthlyRevenueStatsById = async (
+  vendorId: string,
+  year?: number
+): Promise<RevenueStats> => {
+  const params = year ? { year } : {};
+  const response = await axiosInstance.get(`/api/profile/vendors/${vendorId}/revenue-stats/monthly`, {
+    params
+  });
+  return response.data;
+};
+
+export const getVendorTotalRevenueStatsById = async (
+  vendorId: string
+): Promise<RevenueStats> => {
+  const response = await axiosInstance.get(`/api/profile/vendors/${vendorId}/revenue-stats/total`);
+  return response.data;
+};
+
+// Vendor Management API
 export const vendorApi = {
   // Lấy danh sách vendors với pagination và filter
   getVendors: async (params: VendorQueryParams = {}): Promise<VendorResponse> => {

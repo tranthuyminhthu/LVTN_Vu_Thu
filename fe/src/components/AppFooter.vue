@@ -6,7 +6,7 @@
       <div class="!grid grid-cols-1 lg:grid-cols-3 gap-8 !mb-12">
         <!-- Feedback Section -->
         <div class="lg:col-span-1">
-          <h2 class="text-2xl font-bold mb-2 text-start">COOLMATE lắng nghe bạn!</h2>
+          <!-- <h2 class="text-2xl font-bold mb-2 text-start">COOLMATE lắng nghe bạn!</h2> -->
           <p class="text-gray-300 mb-2 text-sm leading-relaxed text-start">
             Chúng tôi luôn trân trọng và mong muốn nhận được mọi phản hồi từ khách hàng để có thể nâng cấp trải nghiệm dịch vụ và sản phẩm ngày càng tốt hơn.
           </p>
@@ -33,7 +33,7 @@
               <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
             </svg>
             <span class="font-medium">Email</span>
-            <span class="text-gray-300">Cool@coolmate.me</span>
+            <span class="text-gray-300">me@me.com</span>
           </div>
         </div>
 
@@ -67,9 +67,9 @@
       <div class="!grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 mb-12">
         <!-- COOLCLUB -->
         <div class="text-start">
-          <h3 class="font-bold text-lg mb-4">COOLCLUB</h3>
+          <h3 class="font-bold text-lg mb-4">CLUB</h3>
           <ul class="space-y-2 text-sm text-gray-300">
-            <li><a href="#" class="hover:text-white transition-colors">Tài khoản CoolClub</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Tài khoản Club</a></li>
             <li><a href="#" class="hover:text-white transition-colors">Đăng kí thành viên</a></li>
             <li><a href="#" class="hover:text-white transition-colors">Ưu đãi & Đặc quyền</a></li>
           </ul>
@@ -106,12 +106,12 @@
 
         <!-- VỀ COOLMATE -->
         <div class="text-start">
-          <h3 class="font-bold text-lg mb-4">VỀ COOLMATE</h3>
+          <h3 class="font-bold text-lg mb-4">VỀ ME</h3>
           <ul class="space-y-2 text-sm text-gray-300">
-            <li><a href="#" class="hover:text-white transition-colors">Quy tắc ứng xử của Coolmate</a></li>
-            <li><a href="#" class="hover:text-white transition-colors">Coolmate 101</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Quy tắc ứng xử của Me</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Me 101</a></li>
             <li><a href="#" class="hover:text-white transition-colors">DVKH xuất sắc</a></li>
-            <li><a href="#" class="hover:text-white transition-colors">Câu chuyện về Coolmate</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Câu chuyện về Me</a></li>
             <li><a href="#" class="hover:text-white transition-colors">Nhà máy</a></li>
             <li><a href="#" class="hover:text-white transition-colors">Care & Share</a></li>
             <li><a href="#" class="hover:text-white transition-colors">Cam kết bền vững</a></li>
@@ -146,7 +146,7 @@
         <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
           <!-- Copyright -->
           <div class="text-sm text-gray-400 text-center lg:text-left">
-            <p class="mb-1">© CÔNG TY TNHH FASTECH ASIA</p>
+            <p class="mb-1">© CÔNG TY TNHH ME</p>
             <p>Mã số doanh nghiệp: 0108617038. Giấy chứng nhận đăng ký doanh nghiệp do Sở Kế hoạch và Đầu tư TP Hà Nội cấp lần đầu ngày 20/02/2019.</p>
           </div>
 

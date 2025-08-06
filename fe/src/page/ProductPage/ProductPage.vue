@@ -52,7 +52,7 @@
               <img :src="product?.vendorInfo.image" alt="" class="!w-10 !h-10 rounded-full">
               <span class="font-bold">{{ product?.vendorInfo.name }}</span>
             </div>
-            <i class="pi pi-heart"></i>
+            <i class="pi pi-heart cursor-pointer" @click="toggleFavorite" :class="product?.isFavorite ? 'text-red-500' : 'text-gray-500'"></i>
           </div>
           <p class="font-bold text-3xl">{{ product?.name || "..." }}</p>
           <span class="flex gap-2 my-2"
@@ -206,7 +206,7 @@ import { useRoute } from "vue-router";
 import { InputNumber } from "primevue";
 import DescriptionProduct from "./DescriptionProduct.vue";
 import type { Product } from "@/types";
-import { getProduct } from "@/api/product";
+import { addFavorite, getProduct, removeFavorite } from "@/api/product";
 import { formatVND } from "@/common";
 import { addItemToCart as addItemToCartApi } from "@/api/cart";
 import Button from 'primevue/button';
@@ -218,6 +218,15 @@ const id = String(route.params.id);
 const product = ref<Product>();
 const toast = useToast();
 const quantity = ref(1);
+const toggleFavorite = async () => {
+  if (product.value?.isFavorite) {
+    await removeFavorite(Number(id));
+  } else {
+    await addFavorite(Number(id));
+  }
+  const res = await getProduct(id);
+  product.value = res;
+};
 const addItemToCart = () => {
   const cartItem: Partial<CartItem> = {
     sku: currentVariant.value?.sku || "",
@@ -234,7 +243,7 @@ const addItemToCart = () => {
     });
   }).catch((error) => {
     toast.add({
-      severity: "error",
+      severity: "warn",
       summary: "Lỗi",
       detail: "Thêm vào giỏ hàng thất bại",
       life: 3000,
@@ -274,24 +283,6 @@ const responsiveOptions = ref([
   {
     breakpoint: "575px",
     numVisible: 1,
-  },
-]);
-const images = ref([
-  {
-    itemImageSrc:
-      "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Navy_1.jpg",
-    thumbnailImageSrc:
-      "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Navy_1.jpg",
-    alt: "Description for Image 1",
-    title: "Title 1",
-  },
-  {
-    itemImageSrc:
-      "https://primefaces.org/cdn/primevue/images/galleria/galleria4.jpg",
-    thumbnailImageSrc:
-      "https://primefaces.org/cdn/primevue/images/galleria/galleria4s.jpg",
-    alt: "Description for Image 1",
-    title: "Title 1",
   },
 ]);
 const selectedSizeId = ref<string | number>(1);

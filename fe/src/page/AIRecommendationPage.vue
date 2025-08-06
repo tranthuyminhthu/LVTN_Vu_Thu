@@ -80,6 +80,7 @@
       v-if="recommendedProducts.length > 0"
       class="bg-white rounded-lg p-6 shadow-sm"
     >
+      <h2 class="text-lg font-semibold mb-4">Sản phẩm tương tự</h2>
       <div class="!grid grid-cols-1 md:grid-cols-5 gap-6">
         <ProductCard
           v-for="product in sortedProducts"
@@ -87,6 +88,18 @@
           :product="product"
         >
         </ProductCard>
+      </div>
+    </div>
+
+    <!-- No Results Message -->
+    <div
+      v-if="!analysisResults && recommendedProducts.length === 0"
+      class="bg-white rounded-lg p-6 shadow-sm text-center"
+    >
+      <div class="space-y-4">
+        <i class="pi pi-search text-6xl text-gray-300"></i>
+        <h2 class="text-lg font-semibold text-gray-600">Không tìm thấy sản phẩm tương tự</h2>
+        <p class="text-gray-500">Hãy thử tải lên một hình ảnh khác để nhận gợi ý sản phẩm phù hợp hơn</p>
       </div>
     </div>
 
@@ -167,17 +180,7 @@ const analyzeImage = async () => {
   try {
     const response = await getRecommend(selectedFile.value);
     console.log(response);
-
-    // Nếu response có trường recommendations thì map ra recommendedProducts
-    if (response && response.recommendations) {
-      recommendedProducts.value = mapRecommendations(response.recommendations);
-    } else {
-      recommendedProducts.value = [];
-    }
-
-    // Nếu muốn map thêm analysisResults từ response, có thể làm ở đây
-    // analysisResults.value = ...
-
+    recommendedProducts.value = response;
   } catch (error) {
     console.error("Error analyzing image:", error);
   } finally {

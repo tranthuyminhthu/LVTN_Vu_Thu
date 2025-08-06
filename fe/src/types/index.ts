@@ -14,7 +14,8 @@ export interface Product {
     description: string;
     price: number;
     rating: number;
-    status: string;
+    status: string | null;
+    isFavorite: boolean;
     variants: ProductVariant[];
     images?: (string | File)[];
     vendorInfo: VendorInfo;
@@ -174,4 +175,56 @@ export interface SocketChatMessageResponse {
     avatar: string | null;
   };
   createdDate: string;
+}
+
+export interface OrderItem {
+  productSku: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  image: string;
+}
+
+export interface OrderTimeline {
+  status: string;
+  note: string;
+  changedAt: string;
+}
+
+export interface Order {
+  orderId: string;
+  userId: string;
+  shopId: number;
+  status: string;
+  totalAmount: number;
+  paymentStatus: string;
+  paymentMethod: string;
+  paymentTransactionId: string | null;
+  createdAt: string;
+  items: OrderItem[];
+  receiverName: string;
+  receiverPhone: string;
+  receiverEmail: string;
+  senderDistrictId: number;
+  senderWardCode: string;
+  receiverAddress: string;
+  receiverWardCode: string;
+  receiverDistrictId: number;
+  note: string;
+  timeline: OrderTimeline[];
+  image: string | null;
+}
+
+export interface VnpayReturnParams {
+  vnp_Amount: string;
+  vnp_BankCode: string;
+  vnp_CardType: string;
+  vnp_OrderInfo: string;
+  vnp_PayDate: string;
+  vnp_ResponseCode: string;
+  vnp_SecureHash: string;
+  vnp_TmnCode: string;
+  vnp_TransactionNo: string;
+  vnp_TransactionStatus: string;
+  vnp_TxnRef: string;
 }

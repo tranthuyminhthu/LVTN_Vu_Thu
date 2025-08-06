@@ -1,38 +1,18 @@
-import type { OrderAcceptedRequestDto } from "@/types";
+import type { OrderAcceptedRequestDto, Order } from "@/types";
 import axiosInstance from ".";
-
-export interface OrderItem {
-  productSku: string;
-  productName: string;
-  quantity: number;
-  price: number;
-}
-
-export interface Order {
-  orderId: string;
-  userId: string;
-  status: string;
-  totalAmount: number;
-  paymentStatus: string;
-  paymentMethod: string;
-  paymentTransactionId: string | null;
-  createdAt: string;
-  items: OrderItem[] | null;
-  receiverName: string | null;
-  receiverPhone: string | null;
-  receiverEmail: string | null;
-  note: string | null;
-  timeline: unknown;
-  image: string;
-  senderDistrictId: number;
-  senderWardCode: string;
-  receiverDistrictId: number;
-  receiverWardCode: string;
-  shopId: number;
-}
+import type { LocationQuery } from "vue-router";
 
 export const getOrders = async (page = 0, size = 10, status?: string) => {
   let url = `/api/order/vendors?page=${page}&size=${size}`;
+  if (status) {
+    url += `&status=${status}`;
+  }
+  const res = await axiosInstance.get(url);
+  return res.data;
+}
+
+export const getAdminOrders = async (page = 0, size = 10, status?: string) => {
+  let url = `/api/order?page=${page}&size=${size}`;
   if (status) {
     url += `&status=${status}`;
   }
@@ -76,7 +56,7 @@ export const getMyOrders = async (page = 0, size = 10) => {
   }
 }
 
-export const getOrderDetail = async (orderId: string) => {
+export const getOrderDetail = async (orderId: string) : Promise<Order> => {
   const res = await axiosInstance.get(`/api/order/${orderId}`);
   return res.data;
 };
@@ -90,5 +70,25 @@ export const changeOrderStatusToAccepted = async (orderId: string) => {
   const res = await axiosInstance.put(`/api/order/accepted` , {
     orderId: orderId
   });
+  return res.data;
+};
+
+export const changeOrderStatusToReceived = async (orderId: string) => {
+  const res = await axiosInstance.put(`/api/order/received` , {
+    orderId: orderId
+  });
+  return res.data;
+};
+
+export const changeOrderStatusToCancelled = async (orderId: string, note: string) => {
+  const res = await axiosInstance.put(`/api/order/cancelled` , {
+    orderId: orderId,
+    note: note
+  });
+  return res.data;
+};
+
+export const vnpayReturn = async (params: LocationQuery) => {
+  const res = await axiosInstance.post(`/api/order/payment`, params);
   return res.data;
 };
