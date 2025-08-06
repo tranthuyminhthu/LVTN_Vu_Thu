@@ -1,4 +1,5 @@
 import axiosInstance from './index';
+import type { Product } from '@/types';
 
 export interface UserProfile {
   userId: string;
@@ -38,6 +39,19 @@ export interface ProfileRequestDto {
   weight?: number;
   gender?: string;
   dob?: string;
+}
+
+export interface FavoriteProductsResponse {
+  products: Product[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface FavoriteProductsQueryParams {
+  page?: number;
+  size?: number;
 }
 
 export const userApi = {
@@ -80,6 +94,37 @@ export const userApi = {
       return response.data;
     } catch (error) {
       console.error('Error updating profile:', error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách sản phẩm yêu thích với pagination
+  getFavoriteProducts: async (params: FavoriteProductsQueryParams = {}): Promise<FavoriteProductsResponse> => {
+    try {
+      const response = await axiosInstance.get('/api/products/favorites', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching favorite products:', error);
+      throw error;
+    }
+  },
+
+  // Thêm sản phẩm vào danh sách yêu thích
+  addToFavorites: async (productId: string): Promise<void> => {
+    try {
+      await axiosInstance.post('/api/favorites', { productId });
+    } catch (error) {
+      console.error('Error adding to favorites:', error);
+      throw error;
+    }
+  },
+
+  // Xóa sản phẩm khỏi danh sách yêu thích
+  removeFromFavorites: async (productId: string): Promise<void> => {
+    try {
+      await axiosInstance.delete(`/api/favorites/${productId}`);
+    } catch (error) {
+      console.error('Error removing from favorites:', error);
       throw error;
     }
   }

@@ -74,3 +74,27 @@ export const logout = async (): Promise<void> => {
         return Promise.reject(error);
     }
 };
+
+export const forgotPassword = async (email: string): Promise<void> => {
+    try {
+        await axiosInstance.post("/api/auth/forgot-password", { email });
+        return Promise.resolve();
+    } catch (error) {
+        return Promise.reject(error);
+    }
+};
+
+export interface ResetPasswordData {
+    token: string;
+    newPassword: string;
+    confirmPassword: string;
+}
+
+export const resetPassword = async (data: ResetPasswordData): Promise<void> => {
+    try {
+        await axiosInstance.post("/api/auth/reset-password", data);
+        return Promise.resolve();
+    } catch (error) {
+        return Promise.reject(error);
+    }
+};

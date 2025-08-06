@@ -13,152 +13,79 @@
       </button>
     </div>
 
-    <!-- Product List -->
-    <div class="bg-white rounded-lg shadow-sm">
-      <div class="p-4 border-b">
-        <div class="flex items-center gap-4">
-          <div class="flex-1">
-            <span class="p-input-icon-left w-full">
-              <i class="pi pi-search" />
-              <InputText
-                v-model="searchQuery"
-                placeholder="Tìm kiếm sản phẩm..."
-                class="w-full"
-              />
-            </span>
-          </div>
-          <Dropdown
-            v-model="sortBy"
-            :options="sortOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Sắp xếp theo"
-            class="w-48"
-          />
-        </div>
-      </div>
-
-      <!-- Product DataTable -->
-      <div>
+    <!-- Tabs for product status -->
+    <TabView v-model:activeIndex="activeTab" @tab-change="onTabChange">
+      <TabPanel
+        v-for="(status, idx) in productStatuses"
+        :key="status.value ?? 'all'"
+        :header="status.label"
+      >
         <DataTable
-          :value="filteredProducts"
+          :value="products"
           :paginator="true"
-          :rows="itemsPerPage"
+          :rows="rowsPerPage"
+          :totalRecords="totalElements"
+          :first="page * rowsPerPage"
           :rowsPerPageOptions="[5, 10, 20, 50]"
           :loading="loading"
           :globalFilterFields="['name', 'description']"
           :sortField="sortField"
           :sortOrder="sortOrder"
           @sort="onSort"
+          @page="onPage"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
           responsiveLayout="scroll"
           class="p-datatable-sm"
+          :lazy="true"
         >
-          <!-- Product Column -->
-          <Column
-            field="name"
-            header="Sản phẩm"
-            :sortable="true"
-            style="min-width: 200px"
-          >
+          <!-- Các cột như cũ -->
+          <Column field="name" header="Sản phẩm" :sortable="true" style="min-width: 200px">
             <template #body="{ data }">
               <div class="flex items-center">
-                <Image
-                  :src="getProductImage(data)"
-                  :alt="data.name"
-                  class="!w-14 !h-14 rounded-lg !object-cover mr-3"
-                  preview
-                  :pt="{
-                    image: '!w-14 !h-14 rounded-lg !object-cover',
-                  }"
-                />
+                <Image :src="getProductImage(data)" :alt="data.name" class="!w-14 !h-14 rounded-lg !object-cover mr-3" preview :pt="{ image: '!w-14 !h-14 rounded-lg !object-cover' }" />
                 <div>
                   <div class="font-medium text-gray-900">{{ data.name }}</div>
-                  <div class="text-sm text-gray-500">
-                    {{ data.category || "Chưa phân loại" }}
-                  </div>
+                  <div class="text-sm text-gray-500">{{ data.category || 'Chưa phân loại' }}</div>
                 </div>
               </div>
             </template>
           </Column>
-
-          <!-- Price Column -->
-          <Column
-            field="price"
-            header="Giá"
-            :sortable="true"
-            style="min-width: 120px"
-          >
-            <template #body="{ data }">
-              <span class="font-medium">{{ formatPrice(data.price) }}</span>
-            </template>
-          </Column>
-
-          <!-- Stock Column -->
-          <Column
-            field="stock"
-            header="Tồn kho"
-            :sortable="true"
-            style="min-width: 100px"
-          >
+          <Column field="stock" header="Tồn kho" :sortable="true" style="min-width: 100px">
             <template #body="{ data }">
               <span class="font-medium">{{ getTotalStock(data) }}</span>
             </template>
           </Column>
-
-          <!-- Rating Column -->
-          <Column
-            field="rating"
-            header="Đánh giá"
-            :sortable="true"
-            style="min-width: 100px"
-          >
+          <Column field="rating" header="Đánh giá" :sortable="true" style="min-width: 150px;">
             <template #body="{ data }">
-              <div class="flex items-center">
-                <span class="font-medium mr-1">{{ data.rating }}</span>
+              <div class="flex items-center gap-2">
+                <span class="font-medium min-w-[20px] ">{{ data.rating || 0 }}</span>
                 <i class="pi pi-star-fill text-yellow-400"></i>
               </div>
             </template>
           </Column>
-
-          <!-- Status Column -->
-          <Column
-            field="status"
-            header="Trạng thái"
-            :sortable="true"
-            style="min-width: 120px"
-          >
+          <Column field="viewCount" header="Lượt xem" :sortable="true" style="min-width: 100px">
             <template #body="{ data }">
-              <Tag
-                :value="data.status || 'Chưa xác định'"
-                :severity="getStatusSeverity(data.status)"
-              />
+              <span class="font-medium">{{ data.viewCount || 0 }}</span>
             </template>
           </Column>
-
-          <!-- Actions Column -->
-          <Column header="Thao tác" style="min-width: 120px">
+          <Column field="status" header="Trạng thái" :sortable="true" style="min-width: 120px">
+            <template #body="{ data }">
+              <Tag :value="mapStatusName(data.status)" :severity="mapStatusSeverity(data.status)" />
+            </template>
+          </Column>
+          <Column header="Thao tác" style="min-width: 180px">
             <template #body="{ data }">
               <div class="flex gap-2">
-                <Button
-                  icon="pi pi-pencil"
-                  class="p-button-text p-button-sm p-button-info"
-                  @click="editProduct(data)"
-                  v-tooltip.top="'Chỉnh sửa'"
-                />
-                <Button
-                  icon="pi pi-trash"
-                  class="p-button-text p-button-sm p-button-danger"
-                  @click="deleteProduct(data)"
-                  v-tooltip.top="'Xóa'"
-                />
+                <Button icon="pi pi-pencil" class="p-button-text p-button-sm p-button-info" @click="editProduct(data)" v-tooltip.top="'Chỉnh sửa biến thể'" />
+
+                <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="handleDeleteProduct(data)" v-tooltip.top="'Xóa'" />
               </div>
             </template>
           </Column>
         </DataTable>
-      </div>
-    </div>
+      </TabPanel>
+    </TabView>
 
     <!-- Add/Edit Product Modal -->
     <Dialog
@@ -172,8 +99,7 @@
         <template #default>
           <form @submit.prevent="saveProduct" class="space-y-6">
             <!-- Basic Product Info -->
-            <div class="!grid grid-cols-2 gap-4 my-2">
-              <div>
+              <div class="mb-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1"
                   >Tên sản phẩm *</label
                 >
@@ -184,18 +110,6 @@
                   required
                 />
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >Giá cơ bản *</label
-                >
-                <input
-                  v-model="currentProduct.price"
-                  type="number"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1"
@@ -208,6 +122,15 @@
                 required
               ></textarea>
             </div>
+
+            <button
+                v-if="isEditing"
+                type="button"
+                @click="updateProductInfo"
+                class="ml-auto block px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                Cập nhật thông tin
+              </button>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1"
@@ -401,7 +324,7 @@
                 type="submit"
                 class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {{ isEditing ? "Cập nhật" : "Thêm mới" }}
+                {{ isEditing ? "Cập nhật biến thể" : "Thêm mới" }}
               </button>
             </div>
           </form>
@@ -427,12 +350,25 @@ import { useToast } from "primevue/usetoast";
 import {
   createProduct,
   getMyProducts,
+  updateProductVariants,
+  deleteProduct,
   type CreateProductPayload,
-  type ProductVariant,
-  type Product,
+  type ProductVariant as ApiProductVariant,
+  type Product as ProductBase,
+  updateProduct,
 } from "@/api/product";
 import LoadingGlobal from "@/components/LoadingGlobal.vue";
 import type { DataTableSortEvent } from 'primevue/datatable';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
+import type { Product, ProductVariant } from "@/types";
+
+const productStatuses = [
+  { label: 'Tất cả', value: undefined },
+  { label: 'Đang chờ xác nhận', value: 'IN_PROGRESS' },
+  { label: 'Đã duyệt', value: 'ACCEPTED' },
+  { label: 'Bị từ chối', value: 'REJECTED' },
+];
 
 // Toast setup
 const toast = useToast();
@@ -442,14 +378,16 @@ const loading = ref(false);
 const isSaving = ref(false);
 
 // Pagination state
-const first = ref(0);
-const itemsPerPage = ref(10);
+const page = ref(0);
+const rowsPerPage = ref(10);
+const totalElements = ref(0);
+const products = ref<Product[]>([]);
+const currentStatus = ref<string | undefined>(undefined);
+const activeTab = ref(0);
 
 // Sorting state
 const sortField = ref("name");
 const sortOrder = ref(1);
-
-const products = ref<Product[]>([]);
 
 const searchQuery = ref("");
 const sortBy = ref("name");
@@ -457,6 +395,8 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const currentProduct = ref<Partial<Product>>({});
 const imagesPreview = ref<string[]>([]);
+
+
 
 // Sort options for dropdown
 const sortOptions = ref([
@@ -469,15 +409,21 @@ const sortOptions = ref([
 
 // Reset pagination when search or sort changes
 watch([searchQuery, sortBy], () => {
-  first.value = 0;
+  page.value = 0;
 });
 
-// Load products on component mount
-const loadProducts = async () => {
+// Load products with pagination and status
+const loadProducts = async (status = currentStatus.value, pageNum = page.value, pageSize = rowsPerPage.value) => {
   loading.value = true;
   try {
-    const response = await getMyProducts();
-    products.value = response;
+    const params: any = { page: pageNum, size: pageSize };
+    if (status) params.status = status;
+    const response = await getMyProducts(params);
+    products.value = response.products;
+    totalElements.value = response.totalElements;
+    currentStatus.value = status;
+    page.value = response.page ?? pageNum;
+    rowsPerPage.value = response.size ?? pageSize;
   } catch (error) {
     console.error("Error loading products:", error);
     toast.add({
@@ -494,6 +440,21 @@ const loadProducts = async () => {
 onMounted(() => {
   loadProducts();
 });
+
+// Khi đổi tab
+const onTabChange = (event: { index: number }) => {
+  const status = productStatuses[event.index].value;
+  currentStatus.value = status;
+  page.value = 0;
+  loadProducts(status, 0, rowsPerPage.value);
+};
+
+// Khi chuyển trang
+const onPage = (event: { page: number; rows: number }) => {
+  page.value = event.page;
+  rowsPerPage.value = event.rows;
+  loadProducts(currentStatus.value, event.page, event.rows);
+};
 
 const filteredProducts = computed(() => {
   let filtered = [...products.value];
@@ -517,15 +478,35 @@ const onSort = (event: DataTableSortEvent) => {
   sortOrder.value = typeof event.sortOrder === 'number' ? event.sortOrder : 1;
 };
 
-// Get status severity for Tag component
-const getStatusSeverity = (status: string | null) => {
+// Map status to Vietnamese name
+const mapStatusName = (status: string | null) => {
   switch (status) {
-    case "active":
-      return "success";
-    case "inactive":
-      return "danger";
+    case 'IN_PROGRESS':
+      return 'Đang chờ xác nhận';
+    case 'ACCEPTED':
+      return 'Đã duyệt';
+    case 'REJECTED':
+      return 'Bị từ chối';
+    case 'REPORTED':
+      return 'Bị báo cáo';
     default:
-      return "warning";
+      return 'Không xác định';
+  }
+};
+
+// Map status to severity color for Tag
+const mapStatusSeverity = (status: string | null) => {
+  switch (status) {
+    case 'IN_PROGRESS':
+      return 'warning';
+    case 'ACCEPTED':
+      return 'success';
+    case 'REJECTED':
+      return 'danger';
+    case 'REPORTED':
+      return 'info';
+    default:
+      return 'secondary';
   }
 };
 
@@ -570,7 +551,15 @@ const openAddProductModal = () => {
 
 const editProduct = (product: Product) => {
   isEditing.value = true;
-  currentProduct.value = { ...product };
+  isSaving.value = false;
+  currentProduct.value = { 
+    ...product,
+    variants: product.variants ? [...product.variants] : []
+  };
+  
+  // Clear image preview when editing
+  imagesPreview.value = [];
+  
   showModal.value = true;
 };
 
@@ -579,22 +568,20 @@ const closeModal = () => {
   currentProduct.value = {};
 };
 
+
+
 const handleImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
-    // Khởi tạo mảng nếu chưa có
-    if (!currentProduct.value.images) {
-      currentProduct.value.images = [];
-    }
-    // Xóa preview cũ nếu cần
+    // Lưu file gốc vào images
+    currentProduct.value.images = Array.from(target.files);
+    // Tạo preview cho UI
     imagesPreview.value = [];
-    // Process each selected file
     Array.from(target.files).forEach((file: File) => {
-      // Tạo preview cho UI và lưu vào images
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageData = e.target?.result as string;
-        currentProduct.value.images?.push(imageData);
+        imagesPreview.value.push(imageData);
       };
       reader.readAsDataURL(file);
     });
@@ -613,12 +600,16 @@ const removeImage = (index: number) => {
   }
 };
 
+
+
 const addVariant = () => {
   if (!currentProduct.value.variants) {
     currentProduct.value.variants = [];
   }
 
   currentProduct.value.variants.push({
+    sku: "",
+    productId: "",
     size: "",
     colorName: "",
     colorHex: "#000000",
@@ -669,30 +660,69 @@ const saveProduct = async () => {
   isSaving.value = true;
 
   if (isEditing.value) {
-    // TODO: Implement API call to update product
-    const index = products.value.findIndex(
-      (p) => p.id === currentProduct.value.id
-    );
-    if (index !== -1) {
-      products.value[index] = {
-        ...products.value[index],
-        ...currentProduct.value,
-      };
+    // Update product variants using API
+    try {
+      const productId = currentProduct.value.id;
+      if (!productId) {
+        throw new Error('Product ID is required for editing');
+      }
+
+      const variants = currentProduct.value.variants || [];
+      // Convert to API format
+      const apiVariants: ApiProductVariant[] = variants.map(variant => ({
+        size: variant.size,
+        colorName: variant.colorName,
+        colorHex: variant.colorHex,
+        price: variant.price,
+        stockQuantity: variant.stockQuantity,
+      }));
+      await updateProductVariants(Number(productId), apiVariants);
+
+      // Update local state
+      const index = products.value.findIndex(
+        (p) => p.id === currentProduct.value.id
+      );
+      if (index !== -1) {
+        products.value[index] = {
+          ...products.value[index],
+          ...currentProduct.value,
+        };
+      }
+
+      toast.add({
+        severity: "success",
+        summary: "Thành công",
+        detail: "Sản phẩm đã được cập nhật",
+        life: 3000,
+      });
+      closeModal();
+      // Reload products to get updated data
+      loadProducts();
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.add({
+        severity: "error",
+        summary: "Lỗi",
+        detail: "Có lỗi xảy ra khi cập nhật sản phẩm. Vui lòng thử lại.",
+        life: 5000,
+      });
     }
-    toast.add({
-      severity: "success",
-      summary: "Thành công",
-      detail: "Sản phẩm đã được cập nhật",
-      life: 3000,
-    });
-    closeModal();
   } else {
     // Prepare payload for API
+    const variants = currentProduct.value.variants || [];
+    const apiVariants: ApiProductVariant[] = variants.map(variant => ({
+      size: variant.size,
+      colorName: variant.colorName,
+      colorHex: variant.colorHex,
+      price: variant.price,
+      stockQuantity: variant.stockQuantity,
+    }));
+    
     const productPayload: CreateProductPayload = {
       name: currentProduct.value.name || "",
       description: currentProduct.value.description || "",
       price: currentProduct.value.price || 0,
-      variants: currentProduct.value.variants || [],
+      variants: apiVariants,
       images: currentProduct.value.images || [],
     };
 
@@ -726,19 +756,70 @@ const saveProduct = async () => {
         isSaving.value = false;
       });
   }
+  isSaving.value = false;
 };
 
-const deleteProduct = (product: Product) => {
+const handleDeleteProduct = async (product: Product) => {
   if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
-    // TODO: Implement API call to delete product
-    products.value = products.value.filter((p) => p.id !== product.id);
+    try {
+      await deleteProduct(Number(product.id));
+      
+      // Remove from local state
+      products.value = products.value.filter((p) => p.id !== product.id);
+
+      toast.add({
+        severity: "success",
+        summary: "Thành công",
+        detail: "Sản phẩm đã được xóa",
+        life: 3000,
+      });
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast.add({
+        severity: "error",
+        summary: "Lỗi",
+        detail: "Có lỗi xảy ra khi xóa sản phẩm. Vui lòng thử lại.",
+        life: 5000,
+      });
+    }
+  }
+};
+
+const updateProductInfo = async () => {
+  isSaving.value = true;
+  
+  try {
+    const productId = currentProduct.value.id;
+    if (!productId) {
+      throw new Error('Product ID is required for updating');
+    }
+
+    // update product
+    await updateProduct(Number(productId), currentProduct.value.name || "", currentProduct.value.description || "");
 
     toast.add({
       severity: "success",
       summary: "Thành công",
-      detail: "Sản phẩm đã được xóa",
+      detail: "Thông tin sản phẩm đã được cập nhật",
       life: 3000,
     });
+    // Don't close modal, just show success message
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Có lỗi xảy ra khi cập nhật thông tin sản phẩm. Vui lòng thử lại.",
+      life: 5000,
+    });
+  } finally {
+    isSaving.value = false;
+    closeModal();
+    loadProducts();
   }
+};
+
+// Hàm lọc sản phẩm theo status
+const filteredProductsByStatus = (status: string) => {
+  return filteredProducts.value.filter(p => p.status === status);
 };
 </script>

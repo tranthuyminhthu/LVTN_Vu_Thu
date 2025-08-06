@@ -15,7 +15,6 @@
       severity="secondary"
       text
       @click="handleLogout"
-      v-tooltip.top="'Đăng xuất'"
     />
   </div>
   
@@ -48,8 +47,6 @@ const userInitials = computed(() => {
   if (!user.value?.username) return 'U'
   return user.value.username.charAt(0).toUpperCase()
 })
-
-console.log(user)
 
 const handleLogout = async () => {
   try {

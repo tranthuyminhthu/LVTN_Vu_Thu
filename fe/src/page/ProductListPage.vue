@@ -190,11 +190,11 @@ const loadProducts = async () => {
     loading.value = true;
     const params: ProductQueryParams = {
       page: productsPagination.value.page,
-      size: productsPagination.value.size
+      size: productsPagination.value.size,
+      status: 'ACCEPTED'
     };
     
     const response = await getProducts(params);
-    console.log('Products API Response:', response);
     
     // Convert API Product to types Product
     products.value = response.products.map(product => ({
@@ -204,7 +204,7 @@ const loadProducts = async () => {
       price: product.price,
       rating: product.rating,
       status: product.status || '',
-      variants: product.variants.map(variant => ({
+      variants: product.variants?.map(variant => ({
         sku: variant.sku || '',
         productId: variant.productId?.toString() || '',
         size: variant.size,
@@ -213,7 +213,12 @@ const loadProducts = async () => {
         price: variant.price,
         stockQuantity: variant.stockQuantity
       })),
-      images: product.images || []
+      images: product.images || [],
+      vendorInfo: {
+        id: product.createdBy || '',
+        name: 'Vendor',
+        image: ''
+      }
     }));
     
     productsPagination.value = {
@@ -222,13 +227,6 @@ const loadProducts = async () => {
       totalElements: response.totalElements,
       totalPages: response.totalPages
     };
-    console.log('Products Pagination state:', {
-      page: response.page,
-      size: response.size,
-      totalElements: response.totalElements,
-      totalPages: response.totalPages,
-      first: response.page * response.size
-    });
   } catch (error) {
     console.error('Error loading products:', error);
   } finally {
@@ -259,10 +257,8 @@ const orderBy = ref([
 ]);
 const selectedCategory = ref("Production");
 const categories = ref([
-  { name: "Đi tiệc", key: "A" },
-  { name: "Mặc hàng ngày", key: "M" },
-  { name: "Công sở", key: "P" },
-  { name: "Thể thao", key: "R" },
+  { name: "Nữ", key: "F" },
+  { name: "Nam", key: "M" },
 ]);
 const selectedSizeId = ref(1);
 const sizeOptions = ref<SizeOption[]>([

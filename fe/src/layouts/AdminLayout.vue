@@ -75,6 +75,18 @@ const menuItems = [
     path: "/admin/orders",
     icon: "pi pi-shopping-bag",
   },
+  {
+    id: 5,
+    name: "Thông báo",
+    path: "/admin/notifications",
+    icon: "pi pi-bell",
+  },
+  {
+    id: 6,
+    name: "Tài chính",
+    path: "/admin/finance",
+    icon: "pi pi-money-bill",
+  },
 ];
 
 onMounted(() => {

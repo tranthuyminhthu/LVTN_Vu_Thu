@@ -5,9 +5,9 @@
     <!-- Logo -->
     <div class="flex items-center cursor-pointer" @click="handleLogo">
       <img
-        src="https://www.coolmate.me/images/logo.png"
+        :src="logoImage"
         alt="Logo"
-        class="!h-8"
+        class="!h-16"
       />
     </div>
 
@@ -20,7 +20,7 @@
     <div class="flex items-center gap-4 justify-center">
       <IconField>
         <InputText
-          v-model="value1"
+          v-model="q"
           placeholder="Tìm kiếm sản phẩm"
           size="small"
           class="!rounded-full"
@@ -37,17 +37,16 @@
         icon="pi pi-comments"
         class="p-button-text p-button-secondary"
         @click="handleChat"
-        v-tooltip.top="'Hỗ trợ khách hàng'"
       />
       
-      <OverlayBadge value="4" severity="danger" :size="'small'">
+      <!-- <OverlayBadge value="4" severity="danger" :size="'small'"> -->
         <img
           src="https://www.coolmate.me/icons/icon-cart.svg"
           alt=""
           @click="handleCart"
           class="cursor-pointer"
         />
-      </OverlayBadge>
+      <!-- </OverlayBadge> -->
     </div>
   </header>
 </template>
@@ -61,10 +60,14 @@ import OverlayBadge from "primevue/overlaybadge";
 import Button from "primevue/button";
 import UserMenu from "./UserMenu.vue";
 import { ref } from "vue";
+// Import ảnh từ assets
+import logoImage from '@/assets/logo.jpg'
+// hoặc
+// import logoImage from '../assets/logo.jpg'
 
 const router = useRouter();
 
-const value1 = ref("");
+const q = ref("");
 const handleCart = () => {
   router.push("/cart");
 };
@@ -72,7 +75,7 @@ const handleLogo = () => {
   router.push({ name: "home" });
 };
 const handleSearch = () => {
-  router.push({ name: "spotlight" });
+  router.push({ name: "spotlight", query: { q: q.value } });
 };
 const handleChat = () => {
   router.push({ name: "chat" });

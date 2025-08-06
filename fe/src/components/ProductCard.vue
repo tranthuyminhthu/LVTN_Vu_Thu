@@ -20,15 +20,15 @@
     </div>
     <div class="product-content">
       <p class="product-name">{{ props.product.name }}</p>
-      <ColorPicker v-model="selectedColor" :colorOptions="colorOptions" />
+      <ColorPicker v-model="selectedColor" :colorOptions="colorOptions" :name="'product_' + props.product.id" />
       <div class="flex items-center gap-2 text-sm mt-2">
         <span class="font-bold">{{ formatVND(selectedVariant?.price || props.product.price) }}</span>
-        <span
+        <!-- <span
           class="rounded-lg bg-[#273bcd] p-1 text-white text-sm font-bold"
           style="font-size: 10px !important"
           >-20%</span
-        >
-        <span class="line-through text-[#c4c4c4]">{{ formatVND(selectedVariant?.price || props.product.price) }}</span>
+        > -->
+        <!-- <span class="line-through text-[#c4c4c4]">{{ formatVND(selectedVariant?.price || props.product.price) }}</span> -->
       </div>
     </div>
     <div class="quick-add p-2">
@@ -45,16 +45,15 @@
         </span>
       </div>
     </div>
-    <div
+    <!-- <div
       class="absolute uppercase text-white text-sm font-bold bg-[#273bcd] px-2 py-1 rounded-full right-[10px] top-[10px]"
       style="font-size: 10px !important"
     >
       New
-    </div>
+    </div> -->
     <div class="absolute top-2 left-2 flex gap-1 text-sm">
-      <span class="font-bold">{{ props.product.rating }}</span>
+      <span class="font-bold">{{ props.product.rating || 0 }}</span>
       <Rating :stars="1" :modelValue="1"/>
-      <span class="text-[#273bcd] font-bold">(83)</span>
     </div>
   </div>
 </template>
@@ -74,7 +73,6 @@ const props = defineProps<{
 }>();
 
 const handleClick = () => {
-  console.log(props.product.id);
   router.push({ name: "product" , params: { id: props.product.id } });
 };
 
@@ -136,17 +134,6 @@ watch(() => props.product, (newProduct) => {
   }
 }, { immediate: true });
 
-watch(selectedColor, (newVal) => {
-  console.log('Selected color:', newVal); 
-});
-
-watch(selectedSize, (newVal) => {
-  console.log('Selected size:', newVal);
-});
-
-watch(selectedVariant, (newVal) => {
-  console.log('Selected variant:', newVal);
-});
 </script>
 
 <style scoped>

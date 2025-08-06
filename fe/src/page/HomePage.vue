@@ -232,7 +232,7 @@ const sampleProducts: Product[] = [
         </button>
       </div>
       <div class="w-primary mx-auto mb-8 mt-4">
-        <div class="!font-criteria font-bold mb-2 text-2xl">SẢN PHẨM MẶC HẰNG NGÀY</div>
+        <div class="!font-criteria font-bold mb-2 text-2xl">SẢN PHẨM NỔI BẬT</div>
         <div class="grid">
           <div class="col-3">
             <ProductCard :product="sampleProducts[0]" />
@@ -269,7 +269,7 @@ const sampleProducts: Product[] = [
         </button>
       </div>
       <div class="w-primary mx-auto mb-8">
-        <div>SẢN PHẨM MẶC HẰNG NGÀY</div>
+        <div class="!font-criteria font-bold mb-2 text-2xl">SẢN PHẨM MỚI</div>
         <div class="grid">
           <div class="col-3">
             <ProductCard :product="sampleProducts[0]" />

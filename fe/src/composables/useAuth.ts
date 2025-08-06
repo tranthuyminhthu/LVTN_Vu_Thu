@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import type { Router } from 'vue-router'
 
 interface AuthTokens {
   accessToken: string
@@ -19,8 +19,6 @@ const user = ref<User | null>(null)
 const isAuthenticated = computed(() => !!accessToken.value)
 
 export function useAuth() {
-  const router = useRouter()
-
   // Lấy tokens từ localStorage khi khởi tạo
   const initializeAuth = () => {
     const storedAccessToken = localStorage.getItem('accessToken')
@@ -74,7 +72,6 @@ export function useAuth() {
 
   // Xóa tokens và user info
   const clearAuth = () => {
-    console.log('Clearing auth state');
     accessToken.value = null
     refreshToken.value = null
     user.value = null
@@ -107,13 +104,21 @@ export function useAuth() {
     console.log('Logout called - clearing auth state');
     clearAuth()
     
-    // Chỉ redirect nếu router có sẵn (trong Vue context)
+    // Sử dụng window.location để redirect
+    console.log('Redirecting to login page');
+    window.location.href = '/login'
+  }
+
+  // Logout với router (sử dụng trong components)
+  const logoutWithRouter = (router: Router) => {
+    console.log('Logout with router called - clearing auth state');
+    clearAuth()
+    
     if (router && typeof router.push === 'function') {
-      console.log('Redirecting to login page');
+      console.log('Redirecting to login page using router');
       router.push('/login')
     } else {
       console.log('Router not available, using window.location');
-      // Fallback: sử dụng window.location nếu router không có sẵn
       window.location.href = '/login'
     }
   }
@@ -124,7 +129,6 @@ export function useAuth() {
     clearAuth()
   }
 
-  // Cập nhật access token (khi refresh token được sử dụng)
   const updateAccessToken = (newAccessToken: string) => {
     console.log('Updating access token:', !!newAccessToken);
     accessToken.value = newAccessToken
@@ -144,6 +148,7 @@ export function useAuth() {
     clearAuth,
     clearLocalStorage,
     logout,
+    logoutWithRouter,
     logoutWithoutRedirect,
     updateAccessToken
   }

@@ -21,10 +21,7 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: [
-      '7f40-116-102-65-136.ngrok-free.app', // Thêm host ngrok của bạn
-      'localhost' // Giữ localhost để chạy cục bộ
-    ],
+    allowedHosts: true,
     host: '0.0.0.0',
     port: 5173,
   }

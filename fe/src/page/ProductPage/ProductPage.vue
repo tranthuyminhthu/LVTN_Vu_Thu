@@ -49,38 +49,22 @@
         <div class="flex-1">
           <div class="flex justify-between items-center mb-4">
             <div class="flex items-center gap-2">
-              <img src="" alt="" class="!w-10 !h-10 rounded-full">
-              <span class="font-bold">Adidas</span>
+              <img :src="product?.vendorInfo.image" alt="" class="!w-10 !h-10 rounded-full">
+              <span class="font-bold">{{ product?.vendorInfo.name }}</span>
             </div>
-            <i class="pi pi-heart"></i>
+            <i class="pi pi-heart cursor-pointer" @click="toggleFavorite" :class="product?.isFavorite ? 'text-red-500' : 'text-gray-500'"></i>
           </div>
           <p class="font-bold text-3xl">{{ product?.name || "..." }}</p>
           <span class="flex gap-2 my-2"
-            ><Rating :model-value="product?.rating" readonly />(39)</span
+            ><Rating :model-value="product?.rating" readonly />({{ product?.rating }})</span
           >
           <div class="my-2">
-            <del class="text-[#c4c4c4]">{{ formatVND(currentPrice) }}</del>
+            <!-- <del class="text-[#c4c4c4]">{{ formatVND(currentPrice) }}</del> -->
           </div>
           <p class="font-bold text-2xl flex gap-4 align-items-center">
             <span class="font-bold text-2xl">{{ formatVND(currentPrice) }}</span>
-            <Badge>-11%</Badge>
+            <!-- <Badge>-11%</Badge> -->
           </p>
-          <!-- <div class="flex gap-4 my-4">
-            <span>Mã giảm giá</span>
-            <span
-              style="
-                background-image: url(&quot;https://media.coolmate.me/image/September2024/mceclip0_126.png&quot;);
-              "
-              class="py-1 px-2 text-[#fa6a18] bg-cover w-[108px] rounded flex justify-content-center bg-no-repeat"
-            >
-              Giảm 40k
-            </span>
-          </div> -->
-          <!-- <img
-            src="https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/April2025/mceclip0_54.jpg"
-            alt=""
-            class="rounded-md"
-          /> -->
           <p class="my-2">
             <span>Màu sắc: </span
             ><span class="font-bold">{{ selectedColor }}</span>
@@ -95,8 +79,12 @@
             <span>Kích thước: </span
             ><span class="font-bold">{{ selectedSize }}</span>
           </p>
-          <div class="flex flex-wrap gap-4 mb-4">
+          <div class="flex flex-wrap gap-4">
             <SizePicker v-model="selectedSizeId" :sizeOptions="availableSizes" />
+          </div>
+          <div class="flex gap-2 my-2">
+            <span>Số lượng còn lại: </span>
+            <span class="font-bold">{{ currentVariant?.stockQuantity }}</span>
           </div>
           <Toast />
           <div class="mb-4 flex gap-2">
@@ -218,16 +206,27 @@ import { useRoute } from "vue-router";
 import { InputNumber } from "primevue";
 import DescriptionProduct from "./DescriptionProduct.vue";
 import type { Product } from "@/types";
-import { getProduct } from "@/api/product";
+import { addFavorite, getProduct, removeFavorite } from "@/api/product";
 import { formatVND } from "@/common";
 import { addItemToCart as addItemToCartApi } from "@/api/cart";
 import Button from 'primevue/button';
 import type { CartItem } from "@/types";
+import { createConversation } from "@/api/chat";
+import router from "@/router";
 const route = useRoute();
 const id = String(route.params.id);
 const product = ref<Product>();
 const toast = useToast();
 const quantity = ref(1);
+const toggleFavorite = async () => {
+  if (product.value?.isFavorite) {
+    await removeFavorite(Number(id));
+  } else {
+    await addFavorite(Number(id));
+  }
+  const res = await getProduct(id);
+  product.value = res;
+};
 const addItemToCart = () => {
   const cartItem: Partial<CartItem> = {
     sku: currentVariant.value?.sku || "",
@@ -244,7 +243,7 @@ const addItemToCart = () => {
     });
   }).catch((error) => {
     toast.add({
-      severity: "error",
+      severity: "warn",
       summary: "Lỗi",
       detail: "Thêm vào giỏ hàng thất bại",
       life: 3000,
@@ -284,24 +283,6 @@ const responsiveOptions = ref([
   {
     breakpoint: "575px",
     numVisible: 1,
-  },
-]);
-const images = ref([
-  {
-    itemImageSrc:
-      "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Navy_1.jpg",
-    thumbnailImageSrc:
-      "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Navy_1.jpg",
-    alt: "Description for Image 1",
-    title: "Title 1",
-  },
-  {
-    itemImageSrc:
-      "https://primefaces.org/cdn/primevue/images/galleria/galleria4.jpg",
-    thumbnailImageSrc:
-      "https://primefaces.org/cdn/primevue/images/galleria/galleria4s.jpg",
-    alt: "Description for Image 1",
-    title: "Title 1",
   },
 ]);
 const selectedSizeId = ref<string | number>(1);
@@ -396,9 +377,9 @@ const zoomImage = () => {
 
 const zoomDialogVisible = ref(false);
 
-const openChat = () => {
-  // TODO: Mở popup chat hoặc chuyển hướng sang trang chat với shop
-  alert('Chức năng chat với shop sẽ được phát triển!');
+const openChat = async () => {
+  const res = await createConversation([product.value?.vendorInfo.id || "", "197170"]);
+  router.push({name: "chat", params: {id: res.id}})
 };
 
 onMounted(async () => {

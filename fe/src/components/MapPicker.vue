@@ -99,7 +99,7 @@ const recipientInfo = ref<RecipientInfo>({
 })
 
 let map: mapboxgl.Map | null = null
-let marker: mapboxgl.Marker | null = null
+// XÓA: let marker: mapboxgl.Marker | null = null
 
 onMounted(() => {
   mapboxgl.accessToken = MAPBOX_TOKEN
@@ -114,17 +114,21 @@ onMounted(() => {
 
   map.on('click', async (e) => {
     const { lng, lat } = e.lngLat
-    if (marker) {
-      marker.setLngLat([lng, lat])
-    } else {
-      marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map!)
-    }
+    // Không tạo marker nữa
     // Reverse geocoding
     const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`)
     const data = await res.json()
     if (data.features && data.features[0]) {
-      console.log(data.features[0])
-      selectedAddress.value = data.features[0].place_name
+      const place = data.features[0];
+      selectedAddress.value = place.place_name;
+      // Tách các phần từ place_name
+      const parts = place.place_name.split(',').map(s => s.trim());
+      emit('address-selected', {
+        address: parts[0] || '',
+        wardName: parts[1] || '',
+        districtName: parts[3] || '',
+        cityName: parts[4] || ''
+      });
     } else {
       selectedAddress.value = 'Không tìm thấy địa chỉ'
     }
@@ -167,33 +171,33 @@ onMounted(() => {
       labelLayerId
     );
     // Lắng nghe click vào POI (địa điểm có sẵn)
-    map.on('click', 'poi-label', function (e) {
-      if (e.features && e.features.length > 0) {
-        const feature = e.features[0];
-        const name = (feature.properties as MapFeatureProperties)?.name || 'Không rõ tên';
-        const geometry = feature.geometry;
-        if (geometry.type === 'Point' && geometry.coordinates) {
-          const coords = geometry.coordinates as [number, number];
-          // Cập nhật marker về đúng vị trí POI
-          if (marker) {
-            marker.setLngLat(coords);
-          } else {
-            marker = new mapboxgl.Marker().setLngLat(coords).addTo(map!);
-          }
-          new mapboxgl.Popup()
-            .setLngLat(coords)
-            .setHTML(`<strong>${name}</strong>`)
-            .addTo(map!);
-          selectedAddress.value = name;
-        }
-      }
-    });
-    map.on('mouseenter', 'poi-label', () => {
-      if (map) map.getCanvas().style.cursor = 'pointer';
-    });
-    map.on('mouseleave', 'poi-label', () => {
-      if (map) map.getCanvas().style.cursor = '';
-    });
+    // map.on('click', 'poi-label', function (e) {
+    //   if (e.features && e.features.length > 0) {
+    //     const feature = e.features[0];
+    //     const name = (feature.properties as MapFeatureProperties)?.name || 'Không rõ tên';
+    //     const geometry = feature.geometry;
+    //     if (geometry.type === 'Point' && geometry.coordinates) {
+    //       const coords = geometry.coordinates as [number, number];
+    //       // Cập nhật marker về đúng vị trí POI
+    //       if (marker) {
+    //         marker.setLngLat(coords);
+    //       } else {
+    //         marker = new mapboxgl.Marker().setLngLat(coords).addTo(map!);
+    //       }
+    //       new mapboxgl.Popup()
+    //         .setLngLat(coords)
+    //         .setHTML(`<strong>${name}</strong>`)
+    //         .addTo(map!);
+    //       selectedAddress.value = name;
+    //     }
+    //   }
+    // });
+    // map.on('mouseenter', 'poi-label', () => {
+    //   if (map) map.getCanvas().style.cursor = 'pointer';
+    // });
+    // map.on('mouseleave', 'poi-label', () => {
+    //   if (map) map.getCanvas().style.cursor = '';
+    // });
   });
 })
 
@@ -208,10 +212,7 @@ function clearSelection() {
     phone: '',
     email: ''
   }
-  if (marker) {
-    marker.remove()
-    marker = null
-  }
+  // XÓA: if (marker) { marker.remove(); marker = null }
 }
 
 function useAddress() {
