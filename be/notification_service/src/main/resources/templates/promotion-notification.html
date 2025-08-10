@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Special Promotion</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 30px 20px;
+            background-color: #ffffff;
+        }
+        .content p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #555;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+        .promotion-banner {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            color: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .discount-badge {
+            background-color: #FFD700;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 18px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .promotion-details {
+            background-color: #f8f9fa;
+            border-left: 4px solid #E91E63;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .expiry-notice {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #856404;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                margin: 0;
+                box-shadow: none;
+            }
+            .header, .content, .footer {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 th:text="${title}">Special Promotion</h1>
+        </div>
+        
+        <div class="content">
+            <p th:text="${content}">Don't miss out on this amazing offer!</p>
+            
+            <div class="promotion-banner" th:if="${discountPercentage}">
+                <h2>🎉 Special Offer! 🎉</h2>
+                <div class="discount-badge" th:text="${discountPercentage + '% OFF'}">50% OFF</div>
+                <p>Limited time only!</p>
+            </div>
+            
+            <div class="promotion-details" th:if="${promotionCode}">
+                <h3>Promotion Details</h3>
+                <p><strong>Promotion Code:</strong> <span th:text="${promotionCode}">SAVE50</span></p>
+                <p th:if="${validFrom}"><strong>Valid From:</strong> <span th:text="${validFrom}">2024-01-01</span></p>
+                <p th:if="${validUntil}"><strong>Valid Until:</strong> <span th:text="${validUntil}">2024-01-31</span></p>
+                <p th:if="${minimumPurchase}"><strong>Minimum Purchase:</strong> <span th:text="${minimumPurchase}">$50</span></p>
+                <p th:if="${maximumDiscount}"><strong>Maximum Discount:</strong> <span th:text="${maximumDiscount}">$100</span></p>
+            </div>
+            
+            <div class="expiry-notice" th:if="${validUntil}">
+                <p><strong>⏰ Hurry!</strong> This promotion expires on <span th:text="${validUntil}">2024-01-31</span></p>
+            </div>
+            
+            <a href="#" class="button">Shop Now</a>
+            <a href="#" class="button">View All Promotions</a>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message from our notification system.</p>
+            <p>To unsubscribe from promotional emails, please update your preferences in your account settings.</p>
+            <p>© 2024 Your Company. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: user-service
+  data:
+    mongodb:
+      uri: mongodb://admin:admin@localhost:27018/user?authSource=admin
+server:
+  port: 8081
+
+idp:
+  url: http://localhost:8180
+  client-id: test
+  client-secret: rPhbE1REFFtfKTHSY8LmE1lGOiSeWiYy

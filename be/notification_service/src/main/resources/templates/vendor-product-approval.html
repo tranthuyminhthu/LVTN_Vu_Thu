@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">New Products Available</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 30px 20px;
+            background-color: #ffffff;
+        }
+        .content p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #555;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+        .product-info {
+            background-color: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .vendor-info {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .product-count {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                margin: 0;
+                box-shadow: none;
+            }
+            .header, .content, .footer {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 th:text="${title}">New Products Available</h1>
+        </div>
+        
+        <div class="content">
+            <p th:text="${content}">New products have been approved and are now available!</p>
+            
+            <div class="vendor-info" th:if="${vendorName}">
+                <p><strong>Vendor:</strong> <span th:text="${vendorName}">Vendor Name</span></p>
+                <p><strong>Approved by:</strong> <span th:text="${approvedBy}">Admin</span></p>
+                <p><strong>Approved at:</strong> <span th:text="${approvedAt}">Date</span></p>
+            </div>
+            
+            <div class="product-info">
+                <p class="product-count" th:text="${'Number of new products: ' + (productIds != null ? productIds.size() : 0)}">
+                    Number of new products: 0
+                </p>
+                <p>Great news! The vendor you follow has just had new products approved. Check them out now!</p>
+                <a href="#" class="button">View New Products</a>
+            </div>
+            
+            <p><small>You're receiving this notification because you have products from this vendor in your wishlist.</small></p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message from our notification system.</p>
+            <p>If you have any questions, please contact our support team.</p>
+            <p>© 2024 Your Company. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 

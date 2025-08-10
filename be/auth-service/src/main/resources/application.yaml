@@ -1,0 +1,14 @@
+server:
+  servlet:
+    context-path: /auth
+
+  port: 8082
+
+idp:
+  url: http://localhost:8180
+  client-id: test
+  client-secret: rPhbE1REFFtfKTHSY8LmE1lGOiSeWiYy
+
+service:
+  profile: http://localhost:8081
+  carts: http://localhost:8083
