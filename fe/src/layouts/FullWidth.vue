@@ -9,14 +9,13 @@
       </main>
   
       <!-- Footer -->
-      <footer>
-        <p>© 2025 My App</p>
-      </footer>
+      <AppFooter />
     </div>
   </template>
   
   <script setup lang="ts">
-  import AppHeader from "../components/AppHeader.vue";
+  import AppFooter from "@/components/AppFooter.vue";
+import AppHeader from "../components/AppHeader.vue";
   </script>
   
   <style scoped>

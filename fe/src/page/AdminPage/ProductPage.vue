@@ -1,75 +1,307 @@
 <template>
   <div class="bg-white rounded-lg p-4 min-h-[500px]">
     <p class="text-2xl font-bold">Quản lý sản phẩm</p>
-    <Tabs value="0">
-      <TabList>
-        <Tab value="0">Sản phẩm chờ duyệt</Tab>
-        <Tab value="1">Sản phẩm bị báo cáo</Tab>
-      </TabList>
-      <TabPanels>
-        <TabPanel value="0">
-          <div class="flex flex-col gap-4">
-            <DataTable
-              :value="pendingProducts"
-              tableStyle="min-width: 50rem"
-              class="bg-white rounded-lg"
-              :paginator="true"
-              :rows="10"
-              :rowsPerPageOptions="[5, 10, 20, 50]"
-            >
-              <Column field="code" header="Mã sản phẩm"></Column>
-              <Column field="name" header="Tên sản phẩm"></Column>
-              <Column field="category" header="Danh mục"></Column>
-              <Column field="price" header="Giá">
-                <template #body="slotProps">
-                  {{ formatPrice(slotProps.data.price) }}
-                </template>
-              </Column>
-              <Column field="vendor" header="Người bán"></Column>
-              <Column header="Thao tác">
-                <template #body="slotProps">
-                  <div class="flex gap-2">
-                    <Button icon="pi pi-check" severity="success" @click="approveProduct(slotProps.data)" />
-                    <Button icon="pi pi-times" severity="danger" @click="rejectProduct(slotProps.data)" />
-                  </div>
-                </template>
-              </Column>
-            </DataTable>
+    <TabView v-model:activeIndex="currentTab" @tab-change="onTabChange">
+      <TabPanel value="0">
+        <template #header>
+          Sản phẩm chờ duyệt
+        </template>
+        <div class="flex flex-col gap-4">
+          <div v-if="loading" class="flex justify-center items-center py-8">
+            <div class="loading-spinner"></div>
+            <span class="ml-2">Đang tải sản phẩm...</span>
           </div>
-        </TabPanel>
-        <TabPanel value="1">
-          <div class="flex flex-col gap-4">
-            <DataTable
-              :value="reportedProducts"
-              tableStyle="min-width: 50rem"
-              class="bg-white rounded-lg"
-              :paginator="true"
-              :rows="10"
-              :rowsPerPageOptions="[5, 10, 20, 50]"
-            >
-              <Column field="code" header="Mã sản phẩm"></Column>
-              <Column field="name" header="Tên sản phẩm"></Column>
-              <Column field="category" header="Danh mục"></Column>
-              <Column field="price" header="Giá">
-                <template #body="slotProps">
-                  {{ formatPrice(slotProps.data.price) }}
-                </template>
-              </Column>
-              <Column field="vendor" header="Người bán"></Column>
-              <Column field="reportCount" header="Số lần báo cáo"></Column>
-              <Column header="Thao tác">
-                <template #body="slotProps">
-                  <div class="flex gap-2">
-                    <Button icon="pi pi-eye" severity="info" @click="viewReportDetails(slotProps.data)" />
-                    <Button icon="pi pi-trash" severity="danger" @click="removeProduct(slotProps.data)" />
-                  </div>
-                </template>
-              </Column>
-            </DataTable>
+
+          <DataTable
+            v-else
+            :value="pendingProducts"
+            tableStyle="min-width: 50rem"
+            class="bg-white rounded-lg"
+            :paginator="true"
+            :rows="pendingProductsPagination.size"
+            :totalRecords="pendingProductsPagination.totalElements"
+            :first="
+              pendingProductsPagination.page * pendingProductsPagination.size
+            "
+            :rowsPerPageOptions="[5, 10, 20, 50]"
+            :lazy="true"
+            @page="onPendingProductsPageChange"
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
+          >
+            <Column header="Ảnh" style="width: 80px">
+              <template #body="slotProps">
+                <Image
+                  :src="
+                    slotProps.data.images && slotProps.data.images.length > 0
+                      ? slotProps.data.images[0]
+                      : 'https://via.placeholder.com/80x80?text=No+Image'
+                  "
+                  alt="Ảnh sản phẩm"
+                  class="!w-14 !h-14 rounded-lg !object-cover"
+                  preview
+                  :pt="{ image: '!w-14 !h-14 rounded-lg !object-cover' }"
+                />
+              </template>
+            </Column>
+            <Column field="id" header="Mã sản phẩm"></Column>
+            <Column field="name" header="Tên sản phẩm"></Column>
+            <Column field="description" header="Mô tả">
+              <template #body="slotProps">
+                {{ slotProps.data.description?.substring(0, 50)
+                }}{{ slotProps.data.description?.length > 50 ? "..." : "" }}
+              </template>
+            </Column>
+            <Column field="price" header="Giá">
+              <template #body="slotProps">
+                {{ formatPrice(slotProps.data.price) }}
+              </template>
+            </Column>
+            <Column field="createdBy" header="Người tạo"></Column>
+            <Column field="status" header="Trạng thái">
+              <template #body="slotProps">
+                <Tag
+                  :value="mapStatusName(slotProps.data.status)"
+                  :severity="mapStatusSeverity(slotProps.data.status)"
+                />
+              </template>
+            </Column>
+            <Column header="Thao tác">
+              <template #body="slotProps">
+                <div class="flex gap-2">
+                  <Button
+                    icon="pi pi-check"
+                    severity="success"
+                    @click="approveProduct(slotProps.data)"
+                  />
+                  <Button
+                    icon="pi pi-times"
+                    severity="danger"
+                    @click="rejectProduct(slotProps.data)"
+                  />
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </TabPanel>
+      <TabPanel value="1">
+        <template #header>
+          Sản phẩm bị báo cáo
+        </template>
+        <div class="flex flex-col gap-4">
+          <div v-if="loading" class="flex justify-center items-center py-8">
+            <div class="loading-spinner"></div>
+            <span class="ml-2">Đang tải sản phẩm...</span>
           </div>
-        </TabPanel>
-      </TabPanels>
-    </Tabs>
+
+          <DataTable
+            v-else
+            :value="reportedProducts"
+            tableStyle="min-width: 50rem"
+            class="bg-white rounded-lg"
+            :paginator="true"
+            :rows="reportedProductsPagination.size"
+            :totalRecords="reportedProductsPagination.totalElements"
+            :first="
+              reportedProductsPagination.page *
+              reportedProductsPagination.size
+            "
+            :rowsPerPageOptions="[5, 10, 20, 50]"
+            :lazy="true"
+            @page="onReportedProductsPageChange"
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
+          >
+            <Column header="Ảnh" style="width: 80px">
+              <template #body="slotProps">
+                <Image
+                  :src="
+                    slotProps.data.images && slotProps.data.images.length > 0
+                      ? slotProps.data.images[0]
+                      : 'https://via.placeholder.com/80x80?text=No+Image'
+                  "
+                  alt="Ảnh sản phẩm"
+                  preview
+                  :pt="{ image: '!w-14 !h-14 rounded-lg !object-cover' }"
+                />
+              </template>
+            </Column>
+            <Column field="id" header="Mã sản phẩm"></Column>
+            <Column field="name" header="Tên sản phẩm"></Column>
+            <Column field="description" header="Mô tả">
+              <template #body="slotProps">
+                {{ slotProps.data.description?.substring(0, 50)
+                }}{{ slotProps.data.description?.length > 50 ? "..." : "" }}
+              </template>
+            </Column>
+            <Column field="price" header="Giá">
+              <template #body="slotProps">
+                {{ formatPrice(slotProps.data.price) }}
+              </template>
+            </Column>
+            <Column field="createdBy" header="Người tạo"></Column>
+            <Column field="reportCount" header="Số lần báo cáo">
+              <template #body="slotProps">
+                <span
+                  class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                >
+                  {{ slotProps.data.reportCount || 0 }}
+                </span>
+              </template>
+            </Column>
+            <Column header="Thao tác">
+              <template #body="slotProps">
+                <div class="flex gap-2">
+                  <Button
+                    icon="pi pi-eye"
+                    severity="info"
+                    @click="viewReportDetails(slotProps.data)"
+                  />
+                  <Button
+                    icon="pi pi-trash"
+                    severity="danger"
+                    @click="removeProduct(slotProps.data)"
+                  />
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </TabPanel>
+      <TabPanel value="2">
+        <template #header>
+          Sản phẩm đã bị từ chối
+        </template>
+        <div class="flex flex-col gap-4">
+          <div v-if="loading" class="flex justify-center items-center py-8">
+            <div class="loading-spinner"></div>
+            <span class="ml-2">Đang tải sản phẩm...</span>
+          </div>
+          <DataTable
+            v-else
+            :value="rejectedProducts"
+            tableStyle="min-width: 50rem"
+            class="bg-white rounded-lg"
+            :paginator="true"
+            :rows="rejectedProductsPagination.size"
+            :totalRecords="rejectedProductsPagination.totalElements"
+            :first="
+              rejectedProductsPagination.page *
+              rejectedProductsPagination.size
+            "
+            :rowsPerPageOptions="[5, 10, 20, 50]"
+            :lazy="true"
+            @page="onRejectedProductsPageChange"
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
+          >
+            <Column header="Ảnh" style="width: 100px">
+              <template #body="slotProps">
+                <Image
+                  :src="
+                    slotProps.data.images && slotProps.data.images.length > 0
+                      ? slotProps.data.images[0]
+                      : 'https://via.placeholder.com/80x80?text=No+Image'
+                  "
+                  alt="Ảnh sản phẩm"
+                  class="!w-16 !h-16 object-cover rounded"
+                  preview
+                />
+              </template>
+            </Column>
+            <Column field="id" header="Mã sản phẩm"></Column>
+            <Column field="name" header="Tên sản phẩm"></Column>
+            <Column field="description" header="Mô tả">
+              <template #body="slotProps">
+                {{ slotProps.data.description?.substring(0, 50)
+                }}{{ slotProps.data.description?.length > 50 ? "..." : "" }}
+              </template>
+            </Column>
+            <Column field="price" header="Giá">
+              <template #body="slotProps">
+                {{ formatPrice(slotProps.data.price) }}
+              </template>
+            </Column>
+            <Column field="createdBy" header="Người tạo"></Column>
+            <Column field="status" header="Trạng thái">
+              <template #body="slotProps">
+                <Tag
+                  :value="mapStatusName(slotProps.data.status)"
+                  :severity="mapStatusSeverity(slotProps.data.status)"
+                />
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </TabPanel>
+      <TabPanel value="3">
+        <template #header>
+          Sản phẩm đã được duyệt
+        </template>
+        <div class="flex flex-col gap-4">
+          <div v-if="loading" class="flex justify-center items-center py-8">
+            <div class="loading-spinner"></div>
+            <span class="ml-2">Đang tải sản phẩm...</span>
+          </div>
+          <DataTable
+            v-else
+            :value="approvedProducts"
+            tableStyle="min-width: 50rem"
+            class="bg-white rounded-lg"
+            :paginator="true"
+            :rows="approvedProductsPagination.size"
+            :totalRecords="approvedProductsPagination.totalElements"
+            :first="
+              approvedProductsPagination.page *
+              approvedProductsPagination.size
+            "
+            :rowsPerPageOptions="[5, 10, 20, 50]"
+            :lazy="true"
+            @page="onApprovedProductsPageChange"
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Hiển thị {first} đến {last} trong tổng số {totalRecords} sản phẩm"
+          >
+            <Column header="Ảnh" style="width: 80px">
+              <template #body="slotProps">
+                <Image
+                  :src="
+                    slotProps.data.images && slotProps.data.images.length > 0
+                      ? slotProps.data.images[0]
+                      : 'https://via.placeholder.com/80x80?text=No+Image'
+                  "
+                  alt="Ảnh sản phẩm"
+                  imageClass="w-16 h-16 object-cover rounded"
+                  preview
+                />
+              </template>
+            </Column>
+            <Column field="id" header="Mã sản phẩm"></Column>
+            <Column field="name" header="Tên sản phẩm"></Column>
+            <Column field="description" header="Mô tả">
+              <template #body="slotProps">
+                {{ slotProps.data.description?.substring(0, 50)
+                }}{{ slotProps.data.description?.length > 50 ? "..." : "" }}
+              </template>
+            </Column>
+            <Column field="price" header="Giá">
+              <template #body="slotProps">
+                {{ formatPrice(slotProps.data.price) }}
+              </template>
+            </Column>
+            <Column field="createdBy" header="Người tạo"></Column>
+            <Column field="status" header="Trạng thái">
+              <template #body="slotProps">
+                <Tag
+                  :value="mapStatusName(slotProps.data.status)"
+                  :severity="mapStatusSeverity(slotProps.data.status)"
+                />
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </TabPanel>
+    </TabView>
   </div>
 </template>
 
@@ -82,79 +314,429 @@ import TabPanel from "primevue/tabpanel";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
-import { ref } from "vue";
+import Tag from "primevue/tag"; // Added Tag import
+import Image from "primevue/image";
+import { ref, onMounted } from "vue";
+import {
+  getProducts,
+  type ProductResponse,
+  type ProductQueryParams,
+  acceptProducts,
+  rejectProducts,
+} from "@/api/product";
+import { useToast } from "primevue/usetoast";
+import TabView from "primevue/tabview";
 
 interface Product {
-  code: string;
+  id: string;
   name: string;
-  category: string;
+  description: string;
   price: number;
-  vendor: string;
+  rating: number;
+  status: string;
+  variants: unknown[];
+  images?: string[];
+  createdBy?: string;
   reportCount?: number;
 }
 
-const pendingProducts = ref<Product[]>([
-  {
-    code: "P001",
-    name: "Áo thun nam cotton",
-    category: "Áo",
-    price: 150000,
-    vendor: "Nguyễn Văn A"
-  },
-  {
-    code: "P002",
-    name: "Quần jean nam",
-    category: "Quần",
-    price: 350000,
-    vendor: "Trần Thị B"
-  }
-]);
+const toast = useToast();
+const loading = ref(false);
+const currentTab = ref(0);
 
-const reportedProducts = ref<Product[]>([
-  {
-    code: "P003",
-    name: "Giày thể thao",
-    category: "Giày",
-    price: 850000,
-    vendor: "Lê Văn C",
-    reportCount: 5
-  },
-  {
-    code: "P004",
-    name: "Túi xách nữ",
-    category: "Phụ kiện",
-    price: 450000,
-    vendor: "Phạm Thị D",
-    reportCount: 3
+// Track which tabs have been loaded
+const loadedTabs = ref<Set<number>>(new Set());
+
+// Pagination state for pending products
+const pendingProductsPagination = ref({
+  page: 0,
+  size: 10,
+  totalElements: 0,
+  totalPages: 0,
+});
+
+// Pagination state for reported products
+const reportedProductsPagination = ref({
+  page: 0,
+  size: 10,
+  totalElements: 0,
+  totalPages: 0,
+});
+
+const pendingProducts = ref<Product[]>([]);
+const reportedProducts = ref<Product[]>([]);
+
+// Load pending products from API
+const loadPendingProducts = async () => {
+  try {
+    loading.value = true;
+    const params: ProductQueryParams = {
+      page: pendingProductsPagination.value.page,
+      size: pendingProductsPagination.value.size,
+      status: "IN_PROGRESS",
+    };
+
+    const response = await getProducts(params);
+    console.log("Pending Products API Response:", response);
+
+    // Convert API Product to UI Product
+    pendingProducts.value = response.products.map((product) => ({
+      id: product.id.toString(),
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      rating: product.rating,
+      status: product.status || "",
+      variants: product.variants || [],
+      images: product.images || [],
+      createdBy: product.createdBy,
+    }));
+
+    pendingProductsPagination.value = {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+    };
+  } catch (error) {
+    console.error("Error loading pending products:", error);
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Không thể tải danh sách sản phẩm chờ duyệt",
+      life: 3000,
+    });
+  } finally {
+    loading.value = false;
   }
-]);
+};
+
+// Load reported products from API
+const loadReportedProducts = async () => {
+  try {
+    loading.value = true;
+    const params: ProductQueryParams = {
+      page: reportedProductsPagination.value.page,
+      size: reportedProductsPagination.value.size,
+      status: "REPORTED", // Assuming there's a REPORTED status
+    };
+
+    const response = await getProducts(params);
+    console.log("Reported Products API Response:", response);
+
+    // Convert API Product to UI Product
+    reportedProducts.value = response.products.map((product) => ({
+      id: product.id.toString(),
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      rating: product.rating,
+      status: product.status || "",
+      variants: product.variants || [],
+      images: product.images || [],
+      createdBy: product.createdBy,
+      reportCount: 0, // TODO: Get from API if available
+    }));
+
+    reportedProductsPagination.value = {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+    };
+  } catch (error) {
+    console.error("Error loading reported products:", error);
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Không thể tải danh sách sản phẩm bị báo cáo",
+      life: 3000,
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Handle pending products pagination
+const onPendingProductsPageChange = (event: {
+  first: number;
+  rows: number;
+  page: number;
+}) => {
+  console.log("Pending products page change event:", event);
+  pendingProductsPagination.value.page = event.page;
+  pendingProductsPagination.value.size = event.rows;
+  loadPendingProducts();
+};
+
+// Handle reported products pagination
+const onReportedProductsPageChange = (event: {
+  first: number;
+  rows: number;
+  page: number;
+}) => {
+  console.log("Reported products page change event:", event);
+  reportedProductsPagination.value.page = event.page;
+  reportedProductsPagination.value.size = event.rows;
+  loadReportedProducts();
+};
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
   }).format(price);
 };
 
-const approveProduct = (product: Product) => {
-  // TODO: Implement approve product logic
-  console.log('Approving product:', product);
+const getStatusDisplayName = (status: string) => {
+  switch (status) {
+    case "IN_PROGRESS":
+      return "Chờ duyệt";
+    case "APPROVED":
+      return "Đã duyệt";
+    case "REJECTED":
+      return "Từ chối";
+    case "REPORTED":
+      return "Bị báo cáo";
+    default:
+      return status;
+  }
 };
 
-const rejectProduct = (product: Product) => {
-  // TODO: Implement reject product logic
-  console.log('Rejecting product:', product);
+// Map status to Vietnamese name
+const mapStatusName = (status: string | null) => {
+  switch (status) {
+    case "IN_PROGRESS":
+      return "Đang chờ xác nhận";
+    case "ACCEPTED":
+      return "Đã duyệt";
+    case "REJECTED":
+      return "Bị từ chối";
+    case "REPORTED":
+      return "Bị báo cáo";
+    default:
+      return "Không xác định";
+  }
+};
+
+// Map status to severity color for Tag
+const mapStatusSeverity = (status: string | null) => {
+  switch (status) {
+    case "IN_PROGRESS":
+      return "warning";
+    case "ACCEPTED":
+      return "success";
+    case "REJECTED":
+      return "danger";
+    case "REPORTED":
+      return "info";
+    default:
+      return "secondary";
+  }
+};
+
+const approveProduct = async (product: Product) => {
+  try {
+    await acceptProducts([product.id]);
+    toast.add({
+      severity: "success",
+      summary: "Thành công",
+      detail: "Duyệt sản phẩm thành công",
+      life: 2000,
+    });
+    loadPendingProducts();
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Duyệt sản phẩm thất bại",
+      life: 3000,
+    });
+  }
+};
+
+const rejectProduct = async (product: Product) => {
+  try {
+    await rejectProducts([product.id]);
+    toast.add({
+      severity: "success",
+      summary: "Thành công",
+      detail: "Từ chối sản phẩm thành công",
+      life: 2000,
+    });
+    loadPendingProducts();
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Từ chối sản phẩm thất bại",
+      life: 3000,
+    });
+  }
 };
 
 const viewReportDetails = (product: Product) => {
   // TODO: Implement view report details logic
-  console.log('Viewing report details for product:', product);
+  console.log("Viewing report details for product:", product);
 };
 
 const removeProduct = (product: Product) => {
   // TODO: Implement remove product logic
-  console.log('Removing product:', product);
+  console.log("Removing product:", product);
 };
+
+const rejectedProductsPagination = ref({
+  page: 0,
+  size: 10,
+  totalElements: 0,
+  totalPages: 0,
+});
+const approvedProductsPagination = ref({
+  page: 0,
+  size: 10,
+  totalElements: 0,
+  totalPages: 0,
+});
+const rejectedProducts = ref<Product[]>([]);
+const approvedProducts = ref<Product[]>([]);
+
+const loadRejectedProducts = async () => {
+  try {
+    loading.value = true;
+    const params: ProductQueryParams = {
+      page: rejectedProductsPagination.value.page,
+      size: rejectedProductsPagination.value.size,
+      status: "REJECTED",
+    };
+    const response = await getProducts(params);
+    rejectedProducts.value = response.products.map((product) => ({
+      id: product.id.toString(),
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      rating: product.rating,
+      status: product.status || "",
+      variants: product.variants || [],
+      images: product.images || [],
+      createdBy: product.createdBy,
+    }));
+    rejectedProductsPagination.value = {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+    };
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Không thể tải danh sách sản phẩm bị từ chối",
+      life: 3000,
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+const loadApprovedProducts = async () => {
+  try {
+    loading.value = true;
+    const params: ProductQueryParams = {
+      page: approvedProductsPagination.value.page,
+      size: approvedProductsPagination.value.size,
+      status: "ACCEPTED",
+    };
+    const response = await getProducts(params);
+    approvedProducts.value = response.products.map((product) => ({
+      id: product.id.toString(),
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      rating: product.rating,
+      status: product.status || "",
+      variants: product.variants || [],
+      images: product.images || [],
+      createdBy: product.createdBy,
+    }));
+    approvedProductsPagination.value = {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+    };
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Không thể tải danh sách sản phẩm đã được duyệt",
+      life: 3000,
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+const onRejectedProductsPageChange = (event: {
+  first: number;
+  rows: number;
+  page: number;
+}) => {
+  rejectedProductsPagination.value.page = event.page;
+  rejectedProductsPagination.value.size = event.rows;
+  loadRejectedProducts();
+};
+const onApprovedProductsPageChange = (event: {
+  first: number;
+  rows: number;
+  page: number;
+}) => {
+  approvedProductsPagination.value.page = event.page;
+  approvedProductsPagination.value.size = event.rows;
+  loadApprovedProducts();
+};
+
+const onTabChange = (event: { index: number }) => {
+  currentTab.value = event.index;
+  
+  // Always load data when switching tabs
+  switch (event.index) {
+    case 0:
+      loadPendingProducts();
+      break;
+    case 1:
+      loadReportedProducts();
+      break;
+    case 2:
+      loadRejectedProducts();
+      break;
+    case 3:
+      loadApprovedProducts();
+      break;
+  }
+};
+
+// Load initial data
+onMounted(() => {
+  // Only load the first tab initially
+  loadPendingProducts();
+  loadedTabs.value.add(0);
+});
 </script>
 
-<style scoped></style>
+<style scoped>
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: mongodb-cart
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:admin}
+      MONGO_INITDB_DATABASE: cart
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongodb_cart_data:/data/db
+      - ./init-cart.js:/docker-entrypoint-initdb.d/init-cart.js:ro
+    restart: unless-stopped
+
+volumes:
+  mongodb_cart_data: 

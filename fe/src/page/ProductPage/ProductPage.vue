@@ -47,38 +47,24 @@
       </div>
       <div class="flex gap-4 col-6">
         <div class="flex-1">
-          <p class="font-bold text-3xl">{{ product?.name }}</p>
-          <p class="">100% Cotton</p>
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+              <img :src="product?.vendorInfo.image" alt="" class="!w-10 !h-10 rounded-full">
+              <span class="font-bold">{{ product?.vendorInfo.name }}</span>
+            </div>
+            <i class="pi pi-heart cursor-pointer" @click="toggleFavorite" :class="product?.isFavorite ? 'text-red-500' : 'text-gray-500'"></i>
+          </div>
+          <p class="font-bold text-3xl">{{ product?.name || "..." }}</p>
           <span class="flex gap-2 my-2"
-            ><Rating :model-value="product?.rating" readonly />(39)</span
+            ><Rating :model-value="product?.rating" readonly />({{ product?.rating }})</span
           >
           <div class="my-2">
-            <del class="text-[#c4c4c4]">{{ formatVND(currentPrice) }}</del>
+            <!-- <del class="text-[#c4c4c4]">{{ formatVND(currentPrice) }}</del> -->
           </div>
           <p class="font-bold text-2xl flex gap-4 align-items-center">
             <span class="font-bold text-2xl">{{ formatVND(currentPrice) }}</span>
-            <Badge>-11%</Badge>
+            <!-- <Badge>-11%</Badge> -->
           </p>
-          <div class="mt-2 flex gap-2 align-items-center">
-            <i class="pi pi-truck"></i>
-            <p class="font-medium">Freeship đơn trên 200K</p>
-          </div>
-          <div class="flex gap-4 my-4">
-            <span>Mã giảm giá</span>
-            <span
-              style="
-                background-image: url(&quot;https://media.coolmate.me/image/September2024/mceclip0_126.png&quot;);
-              "
-              class="py-1 px-2 text-[#fa6a18] bg-cover w-[108px] rounded flex justify-content-center bg-no-repeat"
-            >
-              Giảm 40k
-            </span>
-          </div>
-          <img
-            src="https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/April2025/mceclip0_54.jpg"
-            alt=""
-            class="rounded-md"
-          />
           <p class="my-2">
             <span>Màu sắc: </span
             ><span class="font-bold">{{ selectedColor }}</span>
@@ -93,11 +79,15 @@
             <span>Kích thước: </span
             ><span class="font-bold">{{ selectedSize }}</span>
           </p>
-          <div class="flex flex-wrap gap-4 mb-4">
+          <div class="flex flex-wrap gap-4">
             <SizePicker v-model="selectedSizeId" :sizeOptions="availableSizes" />
           </div>
+          <div class="flex gap-2 my-2">
+            <span>Số lượng còn lại: </span>
+            <span class="font-bold">{{ currentVariant?.stockQuantity }}</span>
+          </div>
           <Toast />
-          <div class="mb-4">
+          <div class="mb-4 flex gap-2">
             <InputNumber
             v-model="quantity"
             showButtons
@@ -115,13 +105,25 @@
             </template>
           </InputNumber>
           </div>
-          <button
-            class="border rounded-full w-full py-2 bg-black text-white cursor-pointer"
-            @click="show"
-          >
-            Thêm vào giỏ hàng
-          </button>
-          <Panel
+          <div class="flex gap-2 mb-4">
+            <button
+              class="border rounded-lg flex-1 py-2 bg-black text-white cursor-pointer"
+              @click="addItemToCart"
+            >
+              Thêm vào giỏ hàng
+            </button>
+            <Button 
+              icon="pi pi-comments" 
+              class="rounded-lg text-black bg-gray-200 border-none hover:bg-gray-300" 
+              @click="openChat" 
+              :pt="{ icon: { class: 'text-black' } }"
+            />
+          </div>
+          <div class="flex gap-2 align-items-center">
+            <i class="pi pi-truck"></i>
+            <p class="font-medium">Freeship đơn trên 200K</p>
+          </div>
+          <!-- <Panel
             toggleable
             class="!bg-[#f1f3ff] my-4"
             ref="panelRef"
@@ -148,8 +150,8 @@
               nulla pariatur. Excepteur sint occaecat cupidatat non proident,
               sunt in culpa qui officia deserunt mollit anim id est laborum.
             </p>
-          </Panel>
-          <div class="grid">
+          </Panel> -->
+          <!-- <div class="grid">
             <div class="col-6 flex gap-2">
               <img
                 src="https://www.coolmate.me/images/product-detail/return.svg"
@@ -178,13 +180,13 @@
               />
               <span>Đến tận nơi nhận hàng trả, hoàn tiền trong 24h</span>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
   </div>
   <DescriptionProduct />
-  <CommentProduct />
+  <CommentProduct :productId="Number(id)" />
 </template>
 <script setup lang="ts">
 import Breadcrumb from "primevue/breadcrumb";
@@ -204,30 +206,70 @@ import { useRoute } from "vue-router";
 import { InputNumber } from "primevue";
 import DescriptionProduct from "./DescriptionProduct.vue";
 import type { Product } from "@/types";
-import { getProduct } from "@/api/product";
+import { addFavorite, getProduct, removeFavorite } from "@/api/product";
 import { formatVND } from "@/common";
+import { addItemToCart as addItemToCartApi } from "@/api/cart";
+import Button from 'primevue/button';
+import type { CartItem } from "@/types";
+import { createConversation } from "@/api/chat";
+import router from "@/router";
 const route = useRoute();
 const id = String(route.params.id);
 const product = ref<Product>();
 const toast = useToast();
 const quantity = ref(1);
-const show = () => {
-  toast.add({
-    severity: "success",
-    summary: "Đã thêm vào giỏ hàng",
-    detail: "Vào giỏ hàng để thêm chi tiết",
-    life: 3000,
+const toggleFavorite = async () => {
+  if (product.value?.isFavorite) {
+    await removeFavorite(Number(id));
+  } else {
+    await addFavorite(Number(id));
+  }
+  const res = await getProduct(id);
+  product.value = res;
+};
+const addItemToCart = () => {
+  const cartItem: Partial<CartItem> = {
+    sku: currentVariant.value?.sku || "",
+    quantity: quantity.value,
+    price: currentPrice.value,
+    productDetails: product.value || undefined,
+  };
+  addItemToCartApi(cartItem as CartItem).then(() => {
+    toast.add({
+      severity: "success",
+      summary: "Đã thêm vào giỏ hàng",
+      detail: "Vào giỏ hàng để thêm chi tiết",
+      life: 3000,
+    });
+  }).catch((error) => {
+    toast.add({
+      severity: "warn",
+      summary: "Lỗi",
+      detail: "Thêm vào giỏ hàng thất bại",
+      life: 3000,
+    });
   });
 };
 const home = ref({
   icon: "pi pi-home",
-  route: "/introduction",
+  route: "/",
 });
+
 const items = ref([
-  { label: "Components" },
-  { label: "Form" },
-  { label: "InputText", route: "/inputtext" },
+  // Danh mục nếu có, ví dụ:
+  // { label: product.value?.category || "Danh mục" },
+  { label: "Sản phẩm", route: "/products" },
+  { label: product.value?.name || "..." },
 ]);
+
+watch(product, (newProduct) => {
+  if (newProduct) {
+    items.value = [
+      { label: "Sản phẩm", route: "/products" },
+      { label: newProduct.name },
+    ];
+  }
+});
 const collapsed = ref(true);
 const onToggle = (event: { value: boolean }) => {
   collapsed.value = !event.value;
@@ -241,24 +283,6 @@ const responsiveOptions = ref([
   {
     breakpoint: "575px",
     numVisible: 1,
-  },
-]);
-const images = ref([
-  {
-    itemImageSrc:
-      "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Navy_1.jpg",
-    thumbnailImageSrc:
-      "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/May2025/Ao-tanktop-nam-mac-trong-anti-smell-Navy_1.jpg",
-    alt: "Description for Image 1",
-    title: "Title 1",
-  },
-  {
-    itemImageSrc:
-      "https://primefaces.org/cdn/primevue/images/galleria/galleria4.jpg",
-    thumbnailImageSrc:
-      "https://primefaces.org/cdn/primevue/images/galleria/galleria4s.jpg",
-    alt: "Description for Image 1",
-    title: "Title 1",
   },
 ]);
 const selectedSizeId = ref<string | number>(1);
@@ -340,14 +364,8 @@ watch(selectedColorId, (newColorId) => {
   }
 });
 
-const selectedImage = ref(
-  "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/April2025/ao-singlet-chay-bo-advanced-vent-techgraphic-pixel-360-vang_60.jpg"
-);
-
-const thumbnails = [
-  "https://media3.coolmate.me/cdn-cgi/image/quality=80,format=auto/uploads/April2025/ao-singlet-chay-bo-advanced-vent-techgraphic-pixel-360-vang_60.jpg",
-  "https://media3.coolmate.me/cdn-cgi/image/format=auto/uploads/April2025/ao-singlet-chay-bo-advanced-vent-techgraphic-pixel-379-vang_87.jpg",
-];
+const thumbnails = ref<string[]>([]);
+const selectedImage = ref<string>("");
 
 const changeImage = (image: string) => {
   selectedImage.value = image;
@@ -359,10 +377,25 @@ const zoomImage = () => {
 
 const zoomDialogVisible = ref(false);
 
+const openChat = async () => {
+  const res = await createConversation([product.value?.vendorInfo.id || "", "197170"]);
+  router.push({name: "chat", params: {id: res.id}})
+};
+
 onMounted(async () => {
   window.scrollTo(0, 0);
   product.value = await getProduct(id);
   
+  // Map images from API
+  if (product.value?.images && product.value.images.length > 0) {
+    thumbnails.value = product.value.images.filter(img => typeof img === 'string');
+    selectedImage.value = thumbnails.value[0];
+  } else {
+    thumbnails.value = [
+      "https://via.placeholder.com/300x400?text=No+Image"
+    ];
+    selectedImage.value = thumbnails.value[0];
+  }
   // Generate size options from product variants
   if (product.value?.variants) {
     const uniqueSizes = [...new Set(product.value.variants.map(variant => variant.size))];

@@ -1,47 +1,53 @@
 <template>
   <AppHeader title="Product List" />
+  <Toast />
   <div class="!mt-header max-w-primary mx-auto pt-12">
     <div class="grid">
       <div class="col !pr-12 pt-8">
-        <h1 class="font-bold text-2xl mb-4 text-center">Sign up with email</h1>
+        <h1 class="font-bold text-2xl mb-4 text-center">Đăng ký</h1>
         <FloatLabel variant="in" class="mb-2 w-full">
           <InputText
-            id="full_name"
-            v-model="fullName"
+            id="username"
+            v-model="username"
             variant="filled"
             class="w-full"
           />
-          <label for="full_name">Full name</label>
+          <label for="username">Username</label>
         </FloatLabel>
-        <FloatLabel variant="in">
+        <FloatLabel variant="in" class="mb-2 w-full">
           <InputText
             id="email"
             v-model="email"
             variant="filled"
             class="w-full"
+            type="email"
           />
           <label for="email">Email</label>
         </FloatLabel>
-        <div class="flex items-center gap-2 my-4">
-          <Checkbox
-            v-model="checked"
-            inputId="ingredient1"
-            name="pizza"
-            value="Cheese"
+        <FloatLabel variant="in" class="mb-2 w-full">
+          <Password
+            id="password"
+            v-model="password"
+            variant="filled"
+            class="w-full"
+            :feedback="false"
+            toggleMask
           />
-          <label for="ingredient1">
-            Send me special offers. personalized recommendations, and learning
-            tips.</label
-          >
+          <label for="password">Password</label>
+        </FloatLabel>
+        <!-- Thay select role thành checkbox -->
+        <div class="mb-2 w-full flex items-center gap-2">
+          <Checkbox v-model="isVendor" inputId="isVendor" :binary="true" />
+          <label for="isVendor">Đăng ký làm người bán</label>
         </div>
         <Button
-          label="Continue with email"
+          label="Đăng ký"
           icon="pi pi-envelope"
           class="w-full"
           @click="handleSignUp"
         />
         <Divider align="center">
-          <b>Other sign up options</b>
+          <b>Hoặc đăng nhập với</b>
         </Divider>
         <div class="flex items-center justify-center gap-4 mt-4">
           <Button variant="outlined" class="!border-2">
@@ -67,13 +73,13 @@
           </Button>
         </div>
         <p class="text-center text-xs my-4">
-          By signing up, you agree to our
-          <a href="/" class="text-primary underline">Terms of Use</a> and
-          <a href="/" class="text-primary underline">Privacy Policy</a>
+          Bằng cách đăng ký, bạn đồng ý với
+          <a href="/" class="text-primary underline">Điều khoản sử dụng</a> và
+          <a href="/" class="text-primary underline">Chính sách bảo mật</a>
         </p>
         <p class="bg-gray-100 p-4 text-center rounded">
-          Already have an account?
-          <a href="/login" class="text-primary font-bold underline">Log in</a>
+          Đã có tài khoản?
+          <router-link to="/login" class="text-primary font-bold underline">Đăng nhập</router-link>
         </p>
       </div>
 
@@ -94,15 +100,56 @@ import Checkbox from "primevue/checkbox";
 import Button from "primevue/button";
 import Divider from "primevue/divider";
 import Select from "primevue/select";
+import Toast from "primevue/toast";
+import Password from "primevue/password";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { register } from "../api/auth";
+import { useToast } from "primevue/usetoast";
 
-const fullName = ref("");
+const username = ref("");
 const email = ref("");
+const password = ref("");
 const checked = ref(false);
+const isVendor = ref(false); // Mặc định là user, nếu check thì là vendor
 const router = useRouter();
+const toast = useToast();
 
-const handleSignUp = () => {
-  router.push("/home");
+const handleSignUp = async () => {
+  try {
+    await register({
+      username: username.value,
+      email: email.value,
+      password: password.value,
+      isVendor: isVendor.value, // Truyền trực tiếp giá trị boolean
+    });
+    
+    // Hiển thị toast thành công
+    toast.add({
+      severity: 'success',
+      summary: 'Đăng ký thành công',
+      detail: 'Tài khoản của bạn đã được tạo thành công!',
+      life: 3000
+    });
+    
+    // Chuyển hướng sau khi đăng ký thành công
+    router.push({ name: 'login' });
+  } catch (error) {
+    // Hiển thị toast lỗi
+    toast.add({
+      severity: 'error',
+      summary: 'Đăng ký thất bại',
+      detail: 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại!',
+      life: 5000
+    });
+  }
 };
 </script>
+<style scoped>
+:deep(.p-password) {
+  width: 100% !important;
+}
+:deep(.p-password .p-inputtext) {
+  width: 100% !important;
+}
+</style>

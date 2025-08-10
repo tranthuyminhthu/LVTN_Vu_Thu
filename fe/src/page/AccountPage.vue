@@ -35,12 +35,31 @@
         </Timeline>
         <p class="italic text-sm text-gray-500">Hạng thành viên được vừa được xét lại vào ngày 01/04/2025, ngày xét hạng tiếp theo: 01/07/2025 </p>
       </div>
-      <div class="w-[30%] flex flex-col gap-2 text-right">
+      <!-- <div class="w-[30%] flex flex-col gap-2 text-right">
         <span>Bạn đang có</span>
         <span>0 cool cash</span>
-        <span>Giới thiệu bạn bè</span>
-        <img src="https://mcdn.coolmate.me/image/March2025/mceclip1_60.png" alt="" class="cursor-pointer w-[375px] ml-auto">
-      </div>
+        <Button label="Đăng ký thành người bán" class="w-full" @click="showSellerDialog = true" />
+        <Dialog v-model:visible="showSellerDialog" modal header="Đăng ký thành người bán" :style="{ width: '400px' }">
+          <form @submit.prevent="submitSellerForm">
+            <div class="mb-4">
+              <label class="block mb-1 font-semibold">Tên shop</label>
+              <InputText v-model="sellerForm.shopName" class="w-full" required />
+            </div>
+            <div class="mb-4">
+              <label class="block mb-1 font-semibold">Số điện thoại</label>
+              <InputText v-model="sellerForm.phone" class="w-full" required />
+            </div>
+            <div class="mb-4">
+              <label class="block mb-1 font-semibold">Email</label>
+              <InputText v-model="sellerForm.email" class="w-full" required />
+            </div>
+            <div class="flex justify-end gap-2">
+              <Button label="Hủy" severity="secondary" @click="showSellerDialog = false" type="button" />
+              <Button label="Đăng ký" type="submit" />
+            </div>
+          </form>
+        </Dialog>
+      </div> -->
     </div>
     <div class="rounded mt-6 flex">
       <div class="w-1/4 mr-8">
@@ -75,6 +94,9 @@
 import Timeline from "primevue/timeline";
 import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import InputText from 'primevue/inputtext';
 
 const router = useRouter();
 const route = useRoute();
@@ -130,4 +152,17 @@ const events = ref([
   "https://mcdn.coolmate.me/image/September2023/mceclip3_45.png",
   "https://mcdn.coolmate.me/image/September2023/mceclip1_32.png",
 ]);
+
+const showSellerDialog = ref(false);
+const sellerForm = ref({
+  shopName: '',
+  phone: '',
+  email: '',
+});
+const submitSellerForm = () => {
+  // Xử lý đăng ký ở đây, ví dụ gửi API
+  showSellerDialog.value = false;
+  // Reset form nếu muốn
+  sellerForm.value = { shopName: '', phone: '', email: '' };
+};
 </script>

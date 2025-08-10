@@ -1,387 +1,504 @@
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-semibold">Quản lý đơn hàng</h1>
-      <div class="flex gap-2">
-        <button
-          v-for="status in orderStatuses"
-          :key="status.value"
-          @click="currentStatus = status.value"
-          :class="[
-            'px-4 py-2 rounded-md focus:outline-none focus:ring-2',
-            currentStatus === status.value
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          ]"
-        >
+  <div class="p-6 rounded-lg">
+    <Toast />
+    <h1 class="text-2xl font-semibold text-white mb-6">Quản lý đơn hàng</h1>
+    <TabView v-model:activeIndex="activeTab" class="rounded-lg">
+      <TabPanel
+        v-for="status in orderStatuses"
+        :key="status.value"
+        :value="status.value"
+      >
+        <template #header>
           {{ status.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Order List -->
-    <div class="bg-white rounded-lg shadow-sm">
-      <div class="p-4 border-b">
-        <div class="flex items-center gap-4">
-          <div class="flex-1">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Tìm kiếm đơn hàng..."
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <select
-            v-model="sortBy"
-            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        </template>
+        <div class="bg-white rounded-lg shadow-sm">
+          <DataTable
+            :value="orders"
+            class="w-full"
+            :pt="{ table: { class: 'min-w-full' } }"
+            :rows="rowsPerPage"
+            paginator
+            :rowsPerPageOptions="[5, 10, 20, 50]"
+            :totalRecords="totalElements"
+            :first="page * rowsPerPage"
+            :loading="loading"
+            :lazy="true"
+            @page="onPage"
           >
-            <option value="date">Ngày đặt</option>
-            <option value="total">Tổng tiền</option>
-            <option value="status">Trạng thái</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Mã đơn hàng
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Khách hàng
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ngày đặt
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tổng tiền
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trạng thái
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Thao tác
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="order in filteredOrders" :key="order.id">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">#{{ order.id }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">{{ order.customerName }}</div>
-                <div class="text-sm text-gray-500">{{ order.customerPhone }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">{{ formatDate(order.orderDate) }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">{{ formatPrice(order.total) }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+            <Column
+              field="orderId"
+              header="Mã đơn hàng"
+              body-class="whitespace-nowrap font-medium"
+            />
+            <Column
+              header="Khách hàng"
+              body-class="whitespace-nowrap"
+            >
+              <template #body="slotProps">
+                <div class="text-sm text-gray-900">
+                  {{ slotProps.data.receiverName }}
+                </div>
+                <div class="text-sm text-gray-500">
+                  {{ slotProps.data.receiverPhone }}
+                </div>
+              </template>
+            </Column>
+            <Column
+              field="createdAt"
+              header="Ngày đặt"
+              body-class="whitespace-nowrap"
+            >
+              <template #body="slotProps">
+                <div class="text-sm text-gray-900">
+                  {{ formatDate(slotProps.data.createdAt) }}
+                </div>
+              </template>
+            </Column>
+            <Column
+              field="totalAmount"
+              header="Tổng tiền"
+              body-class="whitespace-nowrap"
+            >
+              <template #body="slotProps">
+                <div class="text-sm text-gray-900">
+                  {{ formatPrice(slotProps.data.totalAmount || 0) }}
+                </div>
+              </template>
+            </Column>
+            <Column
+              field="status"
+              header="Trạng thái"
+              body-class="whitespace-nowrap"
+            >
+              <template #body="slotProps">
                 <span
                   :class="[
                     'px-2 py-1 text-xs font-medium rounded-full',
-                    getStatusClass(order.status)
+                    getStatusClass(slotProps.data.status),
                   ]"
                 >
-                  {{ getStatusLabel(order.status) }}
+                  {{ getStatusLabel(slotProps.data.status) }}
                 </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <button
-                  @click="viewOrderDetails(order)"
-                  class="text-blue-600 hover:text-blue-900 mr-3"
-                >
-                  <i class="pi pi-eye"></i>
-                </button>
-                <button
-                  v-if="canProcessOrder(order)"
-                  @click="processOrder(order)"
-                  class="text-green-600 hover:text-green-900"
-                >
-                  <i class="pi pi-check"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Order Details Modal -->
-    <Dialog v-model:visible="showModal" :modal="true" :closable="true" :style="{ width: '800px' }" :header="selectedOrder ? `Chi tiết đơn hàng #${selectedOrder.id}` : ''">
-      <div class="mt-3">
-        <div class="flex justify-between items-center mb-4">
-          <!-- Đã có header của Dialog, có thể bỏ phần này nếu muốn -->
-        </div>
-        <div v-if="selectedOrder" class="space-y-4">
-          <!-- Customer Information -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <h4 class="font-medium mb-2">Thông tin khách hàng</h4>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <p class="text-sm text-gray-600">Tên khách hàng</p>
-                <p class="font-medium">{{ selectedOrder.customerName }}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-600">Số điện thoại</p>
-                <p class="font-medium">{{ selectedOrder.customerPhone }}</p>
-              </div>
-              <div class="col-span-2">
-                <p class="text-sm text-gray-600">Địa chỉ giao hàng</p>
-                <p class="font-medium">{{ selectedOrder.shippingAddress }}</p>
-              </div>
-            </div>
-          </div>
-          <!-- Order Items -->
-          <div>
-            <h4 class="font-medium mb-2">Sản phẩm</h4>
-            <div class="border rounded-lg">
-              <div
-                v-for="item in selectedOrder.items"
-                :key="item.id"
-                class="flex items-center p-4 border-b last:border-b-0"
-              >
-                <img
-                  :src="item.image"
-                  :alt="item.name"
-                  class="w-16 h-16 object-cover rounded-lg"
-                />
-                <div class="ml-4 flex-1">
-                  <h5 class="font-medium">{{ item.name }}</h5>
-                  <p class="text-sm text-gray-500">Số lượng: {{ item.quantity }}</p>
-                </div>
-                <div class="text-right">
-                  <p class="font-medium">{{ formatPrice(item.price) }}</p>
-                  <p class="text-sm text-gray-500">
-                    Tổng: {{ formatPrice(item.price * item.quantity) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Order Summary -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <div class="flex justify-between mb-2">
-              <span>Tạm tính</span>
-              <span>{{ formatPrice(selectedOrder.subtotal) }}</span>
-            </div>
-            <div class="flex justify-between mb-2">
-              <span>Phí vận chuyển</span>
-              <span>{{ formatPrice(selectedOrder.shippingFee) }}</span>
-            </div>
-            <div class="flex justify-between font-medium text-lg border-t pt-2 mt-2">
-              <span>Tổng cộng</span>
-              <span>{{ formatPrice(selectedOrder.total) }}</span>
-            </div>
-          </div>
-          <!-- Order Status Timeline -->
-          <div>
-            <h4 class="font-medium mb-2">Trạng thái đơn hàng</h4>
-            <div class="relative">
-              <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-              <div
-                v-for="(status) in orderStatuses"
-                :key="status.value"
-                class="relative pl-10 pb-4"
-              >
-                <div
+              </template>
+            </Column>
+            <Column
+              field="paymentStatus"
+              header="Trạng thái thanh toán"
+              body-class="whitespace-nowrap"
+            >
+              <template #body="slotProps">
+                <span
                   :class="[
-                    'absolute left-0 w-8 h-8 rounded-full flex items-center justify-center',
-                    isStatusCompleted(selectedOrder.status, status.value)
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-600'
+                    'px-2 py-1 text-xs font-medium rounded-full',
+                    getPaymentStatusClass(slotProps.data.paymentStatus),
                   ]"
                 >
-                  <i class="pi pi-check"></i>
+                  {{ getPaymentStatusLabel(slotProps.data.paymentStatus) }}
+                </span>
+              </template>
+            </Column>
+            <Column
+              field="paymentMethod"
+              header="Phương thức thanh toán"
+              body-class="whitespace-nowrap"
+            >
+              <template #body="slotProps">
+                <span
+                  :class="[
+                    'px-2 py-1 text-xs font-medium rounded-full',
+                    getPaymentMethodClass(slotProps.data.paymentMethod),
+                  ]"
+                >
+                  {{ getPaymentMethodLabel(slotProps.data.paymentMethod) }}
+                </span>
+              </template>
+            </Column>
+            <Column
+              header="Thao tác"
+              body-class="whitespace-nowrap text-sm font-medium"
+            >
+              <template #body="slotProps">
+                <div class="flex items-center justify-center gap-2">
+                  <button
+                    v-if="currentStatus === 'PENDING' && canShowAcceptButton(slotProps.data)"
+                    @click="handleClickAccept(slotProps.data)"
+                    class="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                    title="Xác nhận đơn hàng"
+                  >
+                    <i class="pi pi-check"></i>
+                  </button>
+                  <button
+                    v-else-if="currentStatus === 'PENDING' && !canShowAcceptButton(slotProps.data)"
+                    class="w-8 h-8 flex items-center justify-center"
+                  >
+                    <!-- Placeholder để giữ căn chỉnh -->
+                  </button>
+                  <button
+                    @click="viewOrderDetails(slotProps.data)"
+                    class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                    title="Xem chi tiết"
+                  >
+                    <i class="pi pi-eye"></i>
+                  </button>
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </TabPanel>
+    </TabView>
+    <!-- Dialog chi tiết giữ nguyên -->
+    <Dialog
+      v-model:visible="showModal"
+      :modal="true"
+      :closable="true"
+      :style="{ width: '800px' }"
+      :header="
+        selectedOrder ? `Chi tiết đơn hàng #${selectedOrder.orderId}` : ''
+      "
+    >
+      <LoadingGlobal :isLoading="loadingDetail">
+        <div class="mt-3">
+          <div v-if="selectedOrder" class="space-y-4">
+            <!-- Lưu ý giao hàng & Ghi chú -->
+            <div class="p-4 rounded-lg shadow border border-gray-200 mb-2">
+              <h4 class="font-medium mb-2">Lưu ý - Ghi chú</h4>
+              <div class="!grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-gray-600 font-semibold mb-2">
+                    Lưu ý giao hàng <span class="text-red-500">*</span>
+                  </p>
+                  <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="KHONGCHOXEMHANG"
+                        v-model="shippingNoteTypeEdit"
+                        :disabled="!canProcessOrder(selectedOrder)"
+                      />
+                      <span>Không cho xem hàng</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="CHOXEMHANGKHONGTHU"
+                        v-model="shippingNoteTypeEdit"
+                        :disabled="!canProcessOrder(selectedOrder)"
+                        checked
+                      />
+                      <span>Cho xem hàng không cho thử</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="CHOTHUHANG"
+                        v-model="shippingNoteTypeEdit"
+                        :disabled="!canProcessOrder(selectedOrder)"
+                      />
+                      <span>Cho thử hàng</span>
+                    </label>
+                  </div>
                 </div>
                 <div>
-                  <p class="font-medium">{{ status.label }}</p>
-                  <p class="text-sm text-gray-500">
-                    {{ getStatusDate(selectedOrder, status.value) }}
+                  <p class="text-sm text-gray-600 font-semibold mb-2" >
+                    Ghi chú
                   </p>
+                  <Textarea
+                  :disabled="!canProcessOrder(selectedOrder)"
+                    class="w-full border rounded p-2 min-h-[80px]"
+                    v-model="shippingNoteDetailEdit"
+                  ></Textarea>
                 </div>
               </div>
             </div>
-          </div>
-          <!-- Action Buttons -->
-          <div class="flex justify-end gap-3 mt-4">
-            <button
-              v-if="canProcessOrder(selectedOrder)"
-              @click="processOrder(selectedOrder)"
-              class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              {{ getNextActionLabel(selectedOrder.status) }}
-            </button>
+            <!-- Customer Information -->
+            <div class="shadow border border-gray-200 p-4 rounded-lg">
+              <h4 class="font-medium mb-2">Thông tin khách hàng</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-gray-600">Tên khách hàng</p>
+                  <p class="font-medium">{{ selectedOrder.receiverName }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600">Số điện thoại</p>
+                  <p class="font-medium">{{ selectedOrder.receiverPhone }}</p>
+                </div>
+                <div class="col-span-2">
+                  <p class="text-sm text-gray-600">Địa chỉ giao hàng</p>
+                  <p class="font-medium">{{ selectedOrder.note || "---" }}</p>
+                </div>
+              </div>
+            </div>
+            <!-- Order Items -->
+            <div>
+              <h4 class="font-medium mb-2">Sản phẩm</h4>
+              <div class="border rounded-lg border-gray-200 shadow">
+                <div
+                  v-if="selectedOrder.items && selectedOrder.items.length > 0"
+                >
+                  <div
+                    v-for="item in selectedOrder.items as OrderItem[]"
+                    :key="item.productSku"
+                    class="flex items-center p-4 border-b last:border-b-0 border-gray-200"
+                  >
+                    <div
+                      class="w-16 h-16 flex items-center justify-center bg-gray-100 rounded-lg mr-4"
+                    >
+                      <Image
+                        :src="
+                          item.image && item.image !== 'a'
+                            ? item.image
+                            : 'https://via.placeholder.com/80x80?text=No+Image'
+                        "
+                        alt="Ảnh sản phẩm"
+                        class="w-14 h-14 object-cover rounded"
+                        preview
+                      />
+                    </div>
+                    <div class="ml-0 flex-1">
+                      <h5 class="font-medium">{{ item.productName }}</h5>
+                      <p class="text-sm text-gray-500">
+                        Số lượng: {{ item.quantity }}
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <p class="font-medium">{{ formatPrice(item.price) }}</p>
+                      <p class="text-sm text-gray-500">
+                        Tổng: {{ formatPrice(item.price * item.quantity) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="p-4 text-gray-500">Không có sản phẩm</div>
+              </div>
+            </div>
+            <!-- Order Summary -->
+            <div class="rounded-lg">
+              <div class="flex justify-between font-medium text-lg pt-2 mt-2">
+                <span>Tổng cộng</span>
+                <span>{{ formatPrice(selectedOrder.totalAmount || 0) }}</span>
+              </div>
+            </div>
+            <!-- Action Buttons -->
+            <div class="flex justify-end gap-3 mt-4">
+              <button
+                v-if="canProcessOrder(selectedOrder)"
+                @click="processOrder(selectedOrder)"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                {{ getNextActionLabel(selectedOrder.status) }}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </LoadingGlobal>
     </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import Dialog from 'primevue/dialog';
+import { ref, onMounted, watch, computed } from "vue";
+import Dialog from "primevue/dialog";
+import TabView from "primevue/tabview";
+import TabPanel from "primevue/tabpanel";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
+import type {
+  Order as OrderBase,
+  OrderItem as OrderItemBase,
+} from "@/types";
+import { getOrders, getOrderDetail, changeOrderStatusToDelivering, changeOrderStatusToAccepted } from "@/api/order";
+import Image from "primevue/image";
+import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
+import { getService } from "@/api/ghn";
+import type { OrderAcceptedRequestDto } from "@/types";
+import LoadingGlobal from "@/components/LoadingGlobal.vue";
+import { Textarea } from "primevue";
 
-interface OrderItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
-
-interface Order {
-  id: number;
-  customerName: string;
-  customerPhone: string;
-  shippingAddress: string;
-  orderDate: string;
-  status: string;
-  items: OrderItem[];
-  subtotal: number;
-  shippingFee: number;
-  total: number;
-  statusHistory: {
-    status: string;
-    date: string;
-  }[];
-}
+// Use OrderItem directly from types
+type OrderItem = OrderItemBase;
 
 const orderStatuses = [
-  { value: 'pending', label: 'Chờ xử lý' },
-  { value: 'processing', label: 'Đang xử lý' },
-  { value: 'shipped', label: 'Đang giao hàng' },
-  { value: 'delivered', label: 'Đã giao hàng' },
-  { value: 'cancelled', label: 'Đã hủy' },
-  { value: 'refunded', label: 'Đã hoàn trả' },
+  { value: "PENDING", label: "Chờ xử lý" },
+  { value: "PROCESSING", label: "Đang xử lý" },
+  { value: "DELIVERING", label: "Đang giao hàng" },
+  { value: "CANCELLED", label: "Đã hủy" },
+  { value: "REFUNDED", label: "Đã hoàn trả" },
+  { value: "RECEIVED", label: "Đã nhận hàng" },
 ];
 
-const orders = ref<Order[]>([
-  {
-    id: 1,
-    customerName: 'Nguyễn Văn A',
-    customerPhone: '0123456789',
-    shippingAddress: '123 Đường ABC, Quận XYZ, TP.HCM',
-    orderDate: '2024-03-15T10:30:00',
-    status: 'pending',
-    items: [
-      {
-        id: 1,
-        name: 'Sản phẩm 1',
-        price: 100000,
-        quantity: 2,
-        image: 'https://via.placeholder.com/150',
-      },
-      {
-        id: 2,
-        name: 'Sản phẩm 2',
-        price: 150000,
-        quantity: 1,
-        image: 'https://via.placeholder.com/150',
-      },
-    ],
-    subtotal: 350000,
-    shippingFee: 30000,
-    total: 380000,
-    statusHistory: [
-      { status: 'pending', date: '2024-03-15T10:30:00' },
-    ],
-  },
-  // Thêm dữ liệu mẫu khác nếu cần
-]);
-
-const searchQuery = ref('');
-const sortBy = ref('date');
-const currentStatus = ref('pending');
+const orders = ref<OrderBase[]>([]);
+const loading = ref(false);
+const searchQuery = ref("");
+const sortBy = ref("createdAt");
+const activeTab = ref(0);
 const showModal = ref(false);
-const selectedOrder = ref<Order | null>(null);
+const selectedOrder = ref<OrderBase | null>(null);
+const loadingDetail = ref(false);
+const serviceId = ref(0);
+const orderAcceptedRequest = ref<OrderAcceptedRequestDto | null>(null);
+const shippingNoteTypeEdit = ref("CHOXEMHANGKHONGTHU");
+const shippingNoteDetailEdit = ref("");
 
-const filteredOrders = computed(() => {
-  let filtered = [...orders.value];
-  
-  // Lọc theo trạng thái
-  if (currentStatus.value) {
-    filtered = filtered.filter(order => order.status === currentStatus.value);
-  }
-  
-  // Tìm kiếm
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(order => 
-      order.id.toString().includes(query) ||
-      order.customerName.toLowerCase().includes(query) ||
-      order.customerPhone.includes(query)
+const page = ref(0);
+const rowsPerPage = ref(5);
+const totalElements = ref(0);
+const currentStatus = ref(orderStatuses[0].value);
+
+const toast = useToast();
+
+const fetchOrders = async () => {
+  loading.value = true;
+  try {
+    const res = await getOrders(
+      page.value,
+      rowsPerPage.value,
+      currentStatus.value
     );
+    orders.value = res.orders;
+    totalElements.value = res.totalElements;
+  } catch (e) {
+  } finally {
+    loading.value = false;
   }
-  
-  // Sắp xếp
-  filtered.sort((a, b) => {
-    switch (sortBy.value) {
-      case 'date':
-        return new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime();
-      case 'total':
-        return b.total - a.total;
-      case 'status':
-        return a.status.localeCompare(b.status);
-      default:
-        return 0;
-    }
-  });
-  
-  return filtered;
+};
+
+onMounted(() => {
+  fetchOrders();
 });
 
+watch(activeTab, (newIndex) => {
+  currentStatus.value = orderStatuses[newIndex].value;
+  page.value = 0; // reset về trang đầu
+  fetchOrders();
+});
+
+// PrimeVue DataTable page event type
+interface DataTablePageEvent {
+  page: number;
+  first: number;
+  rows: number;
+  pageCount: number;
+}
+
+const onPage = (event: DataTablePageEvent) => {
+  page.value = event.page;
+  rowsPerPage.value = event.rows;
+  fetchOrders();
+};
+
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleString('vi-VN');
+  return new Date(date).toLocaleString("vi-VN");
 };
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
   }).format(price);
 };
 
 const getStatusLabel = (status: string) => {
-  return orderStatuses.find(s => s.value === status)?.label || status;
+  return orderStatuses.find((s) => s.value === status)?.label || status;
 };
 
 const getStatusClass = (status: string) => {
-  const classes = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    processing: 'bg-blue-100 text-blue-800',
-    shipped: 'bg-purple-100 text-purple-800',
-    delivered: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
-    refunded: 'bg-gray-100 text-gray-800',
+  const classes: Record<string, string> = {
+    PENDING: "bg-yellow-100 text-yellow-800",
+    PROCESSING: "bg-blue-100 text-blue-800",
+    SHIPPED: "bg-purple-100 text-purple-800",
+    DELIVERED: "bg-green-100 text-green-800",
+    CANCELLED: "bg-red-100 text-red-800",
+    REFUNDED: "bg-gray-100 text-gray-800",
   };
-  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800';
+  return classes[status] || "bg-gray-100 text-gray-800";
 };
 
-const canProcessOrder = (order: Order) => {
-  const statusFlow = ['pending', 'processing', 'shipped', 'delivered'];
-  const currentIndex = statusFlow.indexOf(order.status);
-  return currentIndex >= 0 && currentIndex < statusFlow.length - 1;
+const getPaymentStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    UNPAID: "Chưa thanh toán",
+    PAID: "Đã thanh toán",
+    REFUNDED: "Đã hoàn trả",
+  };
+  return labels[status] || status;
+};
+
+const getPaymentStatusClass = (status: string) => {
+  const classes: Record<string, string> = {
+    UNPAID: "bg-yellow-100 text-yellow-800",
+    PAID: "bg-green-100 text-green-800",
+    REFUNDED: "bg-red-100 text-red-800",
+  };
+  return classes[status] || "bg-gray-100 text-gray-800";
+};
+
+const getPaymentMethodLabel = (method: string) => {
+  const labels: Record<string, string> = {
+    CASH: "Tiền mặt",
+    BANK_TRANSFER: "Chuyển khoản",
+    ONLINE_PAYMENT: "Thanh toán online",
+    VNPAY: "VNPay",
+  };
+  return labels[method] || method;
+};
+
+const getPaymentMethodClass = (method: string) => {
+  const classes: Record<string, string> = {
+    CASH: "bg-blue-100 text-blue-800",
+    BANK_TRANSFER: "bg-purple-100 text-purple-800",
+    ONLINE_PAYMENT: "bg-green-100 text-green-800",
+    VNPAY: "bg-orange-100 text-orange-800",
+  };
+  return classes[method] || "bg-gray-100 text-gray-800";
+};
+
+const canProcessOrder = (order: OrderBase) => {
+  if (order.status === "PROCESSING") {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+const canShowAcceptButton = (order: OrderBase) => {
+  // Không hiển thị nút accept nếu phương thức thanh toán là VNPay và trạng thái thanh toán là PENDING
+  if (order.paymentMethod === "VNPAY" && order.paymentStatus === "PENDING") {
+    return false;
+  }
+  return true;
 };
 
 const getNextActionLabel = (status: string) => {
-  const actions = {
-    pending: 'Xác nhận đơn hàng',
-    processing: 'Đóng gói và giao hàng',
-    shipped: 'Xác nhận đã giao',
+  const actions: Record<string, string> = {
+    PENDING: "Xác nhận đơn hàng",
+    PROCESSING: "Đóng gói và giao hàng",
+    SHIPPED: "Xác nhận đã giao",
   };
-  return actions[status as keyof typeof actions] || 'Cập nhật trạng thái';
+  return actions[status as keyof typeof actions] || "Cập nhật trạng thái";
 };
 
-const viewOrderDetails = (order: Order) => {
-  selectedOrder.value = order;
-  showModal.value = true;
+const viewOrderDetails = async (order: OrderBase) => {
+  loadingDetail.value = true;
+  try {
+    const detail = await getOrderDetail(order.orderId);
+    selectedOrder.value = detail;
+    shippingNoteDetailEdit.value = detail.note || "";
+    showModal.value = true;
+    const service = await getService({
+      from_district: selectedOrder.value?.senderDistrictId || 1,
+      to_district: selectedOrder.value?.receiverDistrictId || 1,
+      shop_id: selectedOrder.value?.shopId || 1,
+    });
+    serviceId.value = service.data.find(
+      (item: { short_name: string; service_id: number }) => item.short_name === "Hàng nhẹ"
+    )?.service_id;
+    
+  } catch (e) {
+    // handle error, e.g. show toast
+  } finally {
+    loadingDetail.value = false;
+  }
 };
 
 const closeModal = () => {
@@ -389,30 +506,57 @@ const closeModal = () => {
   selectedOrder.value = null;
 };
 
-const processOrder = (order: Order) => {
-  const statusFlow = ['pending', 'processing', 'shipped', 'delivered'];
-  const currentIndex = statusFlow.indexOf(order.status);
-  
-  if (currentIndex >= 0 && currentIndex < statusFlow.length - 1) {
-    const nextStatus = statusFlow[currentIndex + 1];
-    // TODO: Implement API call to update order status
-    order.status = nextStatus;
-    order.statusHistory.push({
-      status: nextStatus,
-      date: new Date().toISOString(),
+const processOrder = async (order: OrderBase) => {
+  loadingDetail.value = true;
+  try {
+    orderAcceptedRequest.value = {
+      orderId: order.orderId,
+      serviceId: serviceId.value,
+      note: shippingNoteDetailEdit.value,
+      requiredNote: shippingNoteTypeEdit.value,
+      content: "Đơn hàng quần áo",
+    };
+    await changeOrderStatusToDelivering(orderAcceptedRequest.value as OrderAcceptedRequestDto);
+    toast.add({
+      severity: "success",
+      summary: "Thành công",
+      detail: "Đơn hàng đã được xác nhận",
+      life: 3000,
     });
+    fetchOrders();
+    if (showModal.value && selectedOrder.value) {
+      // reload detail if dialog is open
+      const detail = await getOrderDetail(order.orderId);
+      selectedOrder.value = detail;
+    }
+    showModal.value = false;
+  } catch (e) {
+    toast.add({
+      severity: "info",
+      summary: "Lỗi",
+      detail: "Không thể giao ở khu vực này",
+      life: 3000,
+    });
+  } finally {
+    loadingDetail.value = false;
   }
 };
 
 const isStatusCompleted = (currentStatus: string, checkStatus: string) => {
-  const statusFlow = ['pending', 'processing', 'shipped', 'delivered'];
+  const statusFlow = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"];
   const currentIndex = statusFlow.indexOf(currentStatus);
   const checkIndex = statusFlow.indexOf(checkStatus);
   return checkIndex <= currentIndex;
 };
 
-const getStatusDate = (order: Order, status: string) => {
-  const history = order.statusHistory.find(h => h.status === status);
-  return history ? formatDate(history.date) : '-';
+const getStatusDate = (order: OrderBase, status: string) => {
+  // Assuming statusHistory is not part of the Order interface from API
+  // If it were, you would iterate through it to find the date for the specific status
+  return "-";
 };
-</script> 
+
+const handleClickAccept = async (order: OrderBase) => {
+  await changeOrderStatusToAccepted(order.orderId);
+  fetchOrders();
+};
+</script>

@@ -5,9 +5,9 @@
     <!-- Logo -->
     <div class="flex items-center cursor-pointer" @click="handleLogo">
       <img
-        src="https://www.coolmate.me/images/logo-coolmate-new-v2.png"
+        :src="logoImage"
         alt="Logo"
-        class="h-8"
+        class="!h-16"
       />
     </div>
 
@@ -16,11 +16,11 @@
       
     </div>
 
-    <!-- Search -->
+    <!-- Search and User Menu -->
     <div class="flex items-center gap-4 justify-center">
       <IconField>
         <InputText
-          v-model="value1"
+          v-model="q"
           placeholder="Tìm kiếm sản phẩm"
           size="small"
           class="!rounded-full"
@@ -28,94 +28,25 @@
         />
         <InputIcon class="pi pi-search" />
       </IconField>
-      <div class="flex items-center justify-center">
+      
+      <!-- User Menu -->
+      <UserMenu />
+      
+      <!-- Chat Link -->
+      <Button
+        icon="pi pi-comments"
+        class="p-button-text p-button-secondary"
+        @click="handleChat"
+      />
+      
+      <!-- <OverlayBadge value="4" severity="danger" :size="'small'"> -->
         <img
-          src="https://mcdn.coolmate.me/image/October2023/mceclip3_72.png"
-          alt=""
-          class="w-8"
-          @click="visible = true"
-        />
-        <Drawer
-          v-model:visible="visible"
-          position="right"
-          :showCloseIcon="false"
-          :pt="{
-            header: () => ({
-              class: 'border-b border-gray-200',
-            }),
-            root: () => ({
-              class: '!w-[400px]',
-            }),
-          }"
-        >
-          <template #header>
-            <div class="">
-              <span class="text-lg font-bold">Hi, Vụ Nguyễn Duy</span>
-              <img
-                src="https://mcdn.coolmate.me/image/October2023/mceclip0_92.png"
-                alt=""
-                class="w-5 mt-2"
-              />
-            </div>
-          </template>
-          <p class="">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat.
-          </p>
-          <div class="flex mt-2 gap-3 ">
-            <div
-              class="bg-[#f1f1f1] flex-1 rounded-lg flex items-center gap-2 flex-col p-2 cursor-pointer"
-            >
-              <img
-                src="https://mcdn.coolmate.me/image/September2023/mceclip1_59.png"
-                alt=""
-                class="w-6"
-              />
-              <span>Ví voucher</span>
-            </div>
-            <div
-              class="bg-[#f1f1f1] flex-1 rounded-lg flex items-center gap-2 flex-col p-2 cursor-pointer"
-            >
-              <img
-                src="https://mcdn.coolmate.me/image/September2023/mceclip1_59.png"
-                alt=""
-                class="w-6"
-              />
-              <span>Ví voucher</span>
-            </div>
-            <div
-              class="bg-[#f1f1f1] flex-1 rounded-lg flex items-center gap-2 flex-col p-2 cursor-pointer"
-            >
-              <img
-                src="https://mcdn.coolmate.me/image/September2023/mceclip1_59.png"
-                alt=""
-                class="w-6"
-              />
-              <span>Ví voucher</span>
-            </div>
-            
-            
-          </div>
-          <template #footer>
-            <div
-              class="bg-primary w-full py-3 text-center cursor-pointer absolute bottom-0 left-0"
-              @click="handleAccount"
-            >
-              Đi đến tài khoản
-            </div>
-          </template>
-        </Drawer>
-      </div>
-      <OverlayBadge value="4" severity="danger" :size="'small'">
-        <img
-          src="https://www.coolmate.me/images/header/icon-cart-new-v2.svg?v=1"
+          src="https://www.coolmate.me/icons/icon-cart.svg"
           alt=""
           @click="handleCart"
           class="cursor-pointer"
         />
-      </OverlayBadge>
+      <!-- </OverlayBadge> -->
     </div>
   </header>
 </template>
@@ -126,23 +57,27 @@ import InputIcon from "primevue/inputicon";
 import { useRouter } from "vue-router";
 import InputText from "primevue/inputtext";
 import OverlayBadge from "primevue/overlaybadge";
-import Drawer from "primevue/drawer";
+import Button from "primevue/button";
+import UserMenu from "./UserMenu.vue";
 import { ref } from "vue";
+// Import ảnh từ assets
+import logoImage from '@/assets/logo.jpg'
+// hoặc
+// import logoImage from '../assets/logo.jpg'
 
 const router = useRouter();
 
-const value1 = ref("");
+const q = ref("");
 const handleCart = () => {
   router.push("/cart");
 };
 const handleLogo = () => {
-  router.push("/home");
-};
-const visible = ref(false);
-const handleAccount = () => {
-  router.push({ name: "info" });
+  router.push({ name: "home" });
 };
 const handleSearch = () => {
-  router.push({ name: "spotlight" });
+  router.push({ name: "spotlight", query: { q: q.value } });
+};
+const handleChat = () => {
+  router.push({ name: "chat" });
 };
 </script>

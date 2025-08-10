@@ -1,13 +1,4 @@
 <script setup lang="ts">
-import AppHeader from "../components/AppHeader.vue";
-import AppBanner from "../components/AppBanner.vue";
-import HomeSection2 from "@/components/HomeSection3.vue";
-import HomeSection3 from "@/components/HomeSection3.vue";
-import HomeSection4 from "@/components/HomeSection4.vue";
-import HomeSection5 from "@/components/HomeSection5.vue";
-import HomeSection6 from "@/components/HomeSection6.vue";
-import HomeSection7 from "@/components/HomeSection7.vue";
-import AppFooter from "@/components/AppFooter.vue";
 // Import Swiper Vue.js components
 import { Swiper, SwiperSlide } from "swiper/vue";
 import type { Swiper as SwiperType } from "swiper";
@@ -19,6 +10,9 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import ProductCard from "@/components/ProductCard.vue";
+import type { Product } from "@/types";
+import { getLatestProducts, getMostViewedProducts, type Product as ApiProduct } from "@/api/product";
+import { onMounted } from 'vue';
 
 const onSwiper = (swiper: SwiperType) => {
   console.log(swiper);
@@ -57,11 +51,131 @@ const womenProducts = [
     title: "Quần thể thao"
   }
 ];
+
+// Sample product data for ProductCard components
+const sampleProducts: Product[] = [
+  {
+    id: "1",
+    name: "Áo thun nam basic",
+    description: "Áo thun nam chất liệu cotton thoáng mát",
+    price: 199000,
+    rating: 4.5,
+    status: "active",
+    isFavorite: false,
+    variants: [],
+    vendorInfo: {
+      id: "1",
+      name: "Coolmate",
+      image: ""
+    }
+  },
+  {
+    id: "2", 
+    name: "Áo polo nam thể thao",
+    description: "Áo polo nam phù hợp cho thể thao",
+    price: 299000,
+    rating: 4.8,
+    status: "active",
+    isFavorite: false,
+    variants: [],
+    vendorInfo: {
+      id: "1",
+      name: "Coolmate",
+      image: ""
+    }
+  },
+  {
+    id: "3",
+    name: "Quần jean nam slim fit",
+    description: "Quần jean nam kiểu dáng slim fit hiện đại",
+    price: 399000,
+    rating: 4.6,
+    status: "active",
+    isFavorite: false,
+    variants: [],
+    vendorInfo: {
+      id: "1",
+      name: "Coolmate",
+      image: ""
+    }
+  },
+  {
+    id: "4",
+    name: "Áo khoác denim nam",
+    description: "Áo khoác denim nam phong cách casual",
+    price: 599000,
+    rating: 4.7,
+    status: "active",
+    isFavorite: false,
+    variants: [],
+    vendorInfo: {
+      id: "1",
+      name: "Coolmate",
+      image: ""
+    }
+  }
+];
+
+// Latest products from API
+const latestProducts = ref<Product[]>([]);
+const loadingLatestProducts = ref(false);
+
+// Most viewed products from API
+const mostViewedProducts = ref<Product[]>([]);
+const loadingMostViewedProducts = ref(false);
+
+const fetchLatestProducts = async () => {
+  try {
+    loadingLatestProducts.value = true;
+    const products = await getLatestProducts();
+    // Map API response to match Product type from @/types
+    latestProducts.value = products.map((product: ApiProduct) => ({
+      ...product,
+      id: product.id.toString(),
+      isFavorite: false,
+      vendorInfo: {
+        id: product.createdBy || "1",
+        name: "Unknown",
+        image: ""
+      }
+    })) as unknown as Product[];
+  } catch (error) {
+    console.error('Error fetching latest products:', error);
+  } finally {
+    loadingLatestProducts.value = false;
+  }
+};
+
+const fetchMostViewedProducts = async () => {
+  try {
+    loadingMostViewedProducts.value = true;
+    const products = await getMostViewedProducts();
+    // Map API response to match Product type from @/types
+    mostViewedProducts.value = products.map((product: ApiProduct) => ({
+      ...product,
+      id: product.id.toString(),
+      isFavorite: false,
+      vendorInfo: {
+        id: product.createdBy || "1",
+        name: "Unknown",
+        image: ""
+      }
+    })) as unknown as Product[];
+  } catch (error) {
+    console.error('Error fetching most viewed products:', error);
+  } finally {
+    loadingMostViewedProducts.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchLatestProducts();
+  fetchMostViewedProducts();
+});
 </script>
 
 <template>
   <div class="relative">
-    <AppHeader />
     <div class="">
       <!-- <AppBanner />
       <HomeSection2 />
@@ -201,19 +315,27 @@ const womenProducts = [
         </button>
       </div>
       <div class="w-primary mx-auto mb-8 mt-4">
-        <div class="!font-criteria font-bold mb-2 text-2xl">SẢN PHẨM MẶC HẰNG NGÀY</div>
-        <div class="grid">
+        <div class="!font-criteria font-bold mb-2 text-2xl">SẢN PHẨM NỔI BẬT</div>
+        <div v-if="loadingMostViewedProducts" class="flex justify-center items-center py-8">
+          <div class="text-lg">Đang tải sản phẩm...</div>
+        </div>
+        <div v-else-if="mostViewedProducts.length > 0" class="grid">
+          <div v-for="product in mostViewedProducts.slice(0, 4)" :key="product.id" class="col-3">
+            <ProductCard :product="product" />
+          </div>
+        </div>
+        <div v-else class="grid">
           <div class="col-3">
-            <ProductCard name="product-color-1" />
+            <ProductCard :product="sampleProducts[0]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-2" />
+            <ProductCard :product="sampleProducts[1]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-3" />
+            <ProductCard :product="sampleProducts[2]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-4" />
+            <ProductCard :product="sampleProducts[3]" />
           </div>
         </div>
       </div>
@@ -238,23 +360,38 @@ const womenProducts = [
         </button>
       </div>
       <div class="w-primary mx-auto mb-8">
-        <div>SẢN PHẨM MẶC HẰNG NGÀY</div>
-        <div class="grid">
+        <div class="!font-criteria font-bold mb-2 text-2xl">SẢN PHẨM MỚI</div>
+        <div v-if="loadingLatestProducts" class="flex justify-center items-center py-8">
+          <div class="text-lg">Đang tải sản phẩm...</div>
+        </div>
+        <div v-else-if="latestProducts.length > 0" class="grid">
+          <div v-for="product in latestProducts.slice(0, 4)" :key="product.id" class="col-3">
+            <ProductCard :product="product" />
+          </div>
+        </div>
+        <div v-else class="grid">
           <div class="col-3">
-            <ProductCard name="product-color-1" />
+            <ProductCard :product="sampleProducts[0]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-2" />
+            <ProductCard :product="sampleProducts[1]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-3" />
+            <ProductCard :product="sampleProducts[2]" />
           </div>
           <div class="col-3">
-            <ProductCard name="product-color-4" />
+            <ProductCard :product="sampleProducts[3]" />
           </div>
         </div>
       </div>
+      
+      <!-- <div class="w-primary mx-auto mb-8">
+        <AuthTest />
+      </div>
+      
+      <div class="w-primary mx-auto mb-8">
+        <UserInfo />
+      </div> -->
     </div>
-    <AppFooter />
   </div>
 </template>

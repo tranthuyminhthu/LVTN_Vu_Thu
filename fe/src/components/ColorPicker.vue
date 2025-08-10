@@ -1,17 +1,17 @@
 <template>
   <div class="flex gap-2">
-    <label 
-      v-for="item in colorOptions" 
-      :key="item.id"
-      :for="'color_' + item.id" 
-      class="cursor-pointer"
-    >
+          <label 
+        v-for="item in colorOptions" 
+        :key="item.id"
+        :for="'color_' + (props.name || '') + '_' + item.id" 
+        class="cursor-pointer"
+      >
       <RadioButton
         v-model="selectedValue"
-        name="color"
+        :name="props.name || 'color'"
         :value="item.id"
         class="hidden"
-        :inputId="'color_' + item.id"
+        :inputId="'color_' + (props.name || '') + '_' + item.id"
         @change="handleChange"
       />
       <div 
@@ -49,6 +49,7 @@ export interface ColorOption {
 const props = defineProps<{
   modelValue: string | number;
   colorOptions: ColorOption[];
+  name?: string;
 }>();
 
 const emit = defineEmits<{

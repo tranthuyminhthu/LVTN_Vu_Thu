@@ -1,0 +1,14 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: chat-service
+  data:
+    mongodb:
+      uri: mongodb://admin:admin@localhost:27020/chat?authSource=admin
+      auto-index-creation: true
+
+service:
+  user-service: http://localhost:8081
+  gateway-service: http://localhost:8888

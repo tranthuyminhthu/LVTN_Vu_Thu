@@ -20,47 +20,38 @@
             tableStyle="min-width: 50rem"
             class="bg-white rounded-lg"
             :paginator="true"
-            :rows="10"
+            :rows="usersPagination.size"
             :rowsPerPageOptions="[5, 10, 20, 50]"
-            :loading="loading"
+            :loading="usersLoading"
             :filters="filters"
             filterDisplay="menu"
+            :totalRecords="usersPagination.totalElements"
+            :first="usersPagination.page * usersPagination.size"
+            :lazy="true"
+            @page="onUserPageChange"
           >
-            <Column field="id" header="ID" sortable></Column>
-            <Column field="name" header="Họ tên" sortable></Column>
+            <Column field="userId" header="ID" sortable></Column>
+            <Column field="fullName" header="Họ tên" sortable>
+              <template #body="slotProps">
+                {{ slotProps.data.fullName || slotProps.data.username || 'Chưa có tên' }}
+              </template>
+            </Column>
             <Column field="email" header="Email" sortable></Column>
-            <Column field="phone" header="Số điện thoại"></Column>
+            <Column field="username" header="Tên đăng nhập" sortable></Column>
             <Column field="role" header="Vai trò" sortable>
               <template #body="slotProps">
-                <Tag :severity="getRoleSeverity(slotProps.data.role)" :value="slotProps.data.role" />
+                <Tag :severity="getRoleSeverity(slotProps.data.role || 'USER')" :value="getRoleDisplayName(slotProps.data.role)" />
               </template>
             </Column>
-            <Column field="status" header="Trạng thái" sortable>
+            <Column field="type" header="Loại tài khoản" sortable>
               <template #body="slotProps">
-                <Tag :severity="getStatusSeverity(slotProps.data.status)" :value="slotProps.data.status" />
-              </template>
-            </Column>
-            <Column field="joinDate" header="Ngày tham gia" sortable>
-              <template #body="slotProps">
-                {{ formatDate(slotProps.data.joinDate) }}
+                <Tag :severity="getTypeSeverity(slotProps.data.type)" :value="getTypeDisplayName(slotProps.data.type)" />
               </template>
             </Column>
             <Column header="Thao tác">
               <template #body="slotProps">
                 <div class="flex gap-2">
                   <Button icon="pi pi-eye" severity="info" @click="viewUserDetails(slotProps.data)" />
-                  <Button 
-                    v-if="slotProps.data.status === 'Hoạt động'" 
-                    icon="pi pi-ban" 
-                    severity="warning" 
-                    @click="updateUserStatus(slotProps.data, 'Bị khóa')" 
-                  />
-                  <Button 
-                    v-if="slotProps.data.status === 'Bị khóa'" 
-                    icon="pi pi-check" 
-                    severity="success" 
-                    @click="updateUserStatus(slotProps.data, 'Hoạt động')" 
-                  />
                   <Button icon="pi pi-trash" severity="danger" @click="deleteUser(slotProps.data)" />
                 </div>
               </template>
@@ -68,30 +59,60 @@
           </DataTable>
         </TabPanel>
         <TabPanel value="1">
+          <div class="flex gap-4 mb-4">
+            <InputText v-model="vendorSearchQuery" placeholder="Tìm kiếm cửa hàng..." class="w-64" />
+            <Select v-model="selectedVendorStatus" :options="vendorStatusOptions" optionLabel="name" optionValue="value" placeholder="Trạng thái" class="w-48" />
+            <Button 
+              v-if="selectedVendors.length > 0"
+              icon="pi pi-check" 
+              label="Duyệt đã chọn" 
+              severity="success" 
+              @click="acceptSelectedVendors"
+              :loading="bulkActionLoading"
+            />
+          </div>
           <DataTable
             :value="vendors"
+            v-model:selection="selectedVendors"
+            selectionMode="multiple"
+            :metaKeySelection="false"
             tableStyle="min-width: 50rem"
             class="bg-white rounded-lg"
             :paginator="true"
-            :rows="10"
+            :rows="vendorsPagination.size"
             :rowsPerPageOptions="[5, 10, 20, 50]"
-            :loading="loading"
+            :loading="vendorsLoading"
             :filters="filters"
             filterDisplay="menu"
+            :totalRecords="vendorsPagination.totalElements"
+            :first="vendorsPagination.page * vendorsPagination.size"
+            :lazy="true"
+            @page="onVendorPageChange"
           >
             <Column field="id" header="ID" sortable></Column>
-            <Column field="name" header="Tên cửa hàng" sortable></Column>
-            <Column field="owner" header="Chủ cửa hàng" sortable></Column>
-            <Column field="email" header="Email" sortable></Column>
-            <Column field="phone" header="Số điện thoại"></Column>
-            <Column field="status" header="Trạng thái" sortable>
+            <Column field="name" header="Tên cửa hàng" sortable>
               <template #body="slotProps">
-                <Tag :severity="getStatusSeverity(slotProps.data.status)" :value="slotProps.data.status" />
+                {{ slotProps.data.name || 'Chưa có tên' }}
               </template>
             </Column>
-            <Column field="joinDate" header="Ngày tham gia" sortable>
+            <Column field="email" header="Email" sortable>
               <template #body="slotProps">
-                {{ formatDate(slotProps.data.joinDate) }}
+                {{ slotProps.data.email || 'Chưa có email' }}
+              </template>
+            </Column>
+            <Column field="phone" header="Số điện thoại">
+              <template #body="slotProps">
+                {{ slotProps.data.phone || 'Chưa có số điện thoại' }}
+              </template>
+            </Column>
+            <Column field="status" header="Trạng thái" sortable>
+              <template #body="slotProps">
+                <Tag :severity="getStatusSeverity(slotProps.data.status)" :value="getStatusDisplayName(slotProps.data.status)" />
+              </template>
+            </Column>
+            <Column field="createdAt" header="Ngày tạo" sortable>
+              <template #body="slotProps">
+                {{ formatDate(new Date(slotProps.data.createdAt)) }}
               </template>
             </Column>
             <Column header="Thao tác">
@@ -99,18 +120,24 @@
                 <div class="flex gap-2">
                   <Button icon="pi pi-eye" severity="info" @click="viewVendorDetails(slotProps.data)" />
                   <Button 
-                    v-if="slotProps.data.status === 'Hoạt động'" 
+                    v-if="slotProps.data.status === 'APPROVED'" 
                     icon="pi pi-ban" 
                     severity="warning" 
-                    @click="updateVendorStatus(slotProps.data, 'Bị khóa')" 
+                    @click="updateVendorStatus(slotProps.data, 'SUSPENDED')" 
                   />
                   <Button 
-                    v-if="slotProps.data.status === 'Bị khóa'" 
+                    v-if="slotProps.data.status === 'PENDING'" 
                     icon="pi pi-check" 
                     severity="success" 
-                    @click="updateVendorStatus(slotProps.data, 'Hoạt động')" 
+                    @click="updateVendorStatus(slotProps.data, 'APPROVED')" 
                   />
-                  <Button icon="pi pi-trash" severity="danger" @click="deleteVendor(slotProps.data)" />
+                  <Button 
+                    v-if="slotProps.data.status === 'SUSPENDED'" 
+                    icon="pi pi-check" 
+                    severity="success" 
+                    @click="updateVendorStatus(slotProps.data, 'APPROVED')" 
+                  />
+                  <Button icon="pi pi-times" severity="danger" @click="rejectVendor(slotProps.data)" title="Từ chối" />
                 </div>
               </template>
             </Column>
@@ -119,46 +146,25 @@
       </TabPanels>
     </Tabs>
 
-    <Dialog v-model:visible="userDetailsVisible" modal header="Chi tiết người dùng" :style="{ width: '70vw' }">
+    <Dialog v-model:visible="userDetailsVisible" modal header="Chi tiết người dùng" :style="{ width: '50vw' }">
       <div v-if="selectedUser" class="p-4">
         <div class="grid">
           <div class="col-6">
             <p class="font-bold">Thông tin cá nhân</p>
-            <p>Họ tên: {{ selectedUser.name }}</p>
+            <p>Họ tên: {{ selectedUser.fullName || 'Chưa có tên' }}</p>
             <p>Email: {{ selectedUser.email }}</p>
-            <p>Số điện thoại: {{ selectedUser.phone }}</p>
-            <p>Ngày tham gia: {{ formatDate(selectedUser.joinDate) }}</p>
+            <p>Tên đăng nhập: {{ selectedUser.username }}</p>
+            <p>Ngày sinh: {{ selectedUser.dob || 'Chưa có thông tin' }}</p>
+            <p>Giới tính: {{ selectedUser.gender || 'Chưa có thông tin' }}</p>
           </div>
           <div class="col-6">
             <p class="font-bold">Thông tin tài khoản</p>
-            <p>Vai trò: <Tag :severity="getRoleSeverity(selectedUser.role)" :value="selectedUser.role" /></p>
-            <p>Trạng thái: <Tag :severity="getStatusSeverity(selectedUser.status)" :value="selectedUser.status" /></p>
+            <p>ID: {{ selectedUser.userId }}</p>
+            <p>Vai trò: <Tag :severity="getRoleSeverity(selectedUser.role || 'USER')" :value="getRoleDisplayName(selectedUser.role)" /></p>
+            <p>Loại tài khoản: <Tag :severity="getTypeSeverity(selectedUser.type)" :value="getTypeDisplayName(selectedUser.type)" /></p>
+            <p>Tên cửa hàng: {{ selectedUser.shopName || 'Không có' }}</p>
           </div>
         </div>
-        <Divider />
-        <div class="flex justify-content-between align-items-center mb-3">
-          <p class="font-bold m-0">Lịch sử hoạt động</p>
-          <div class="flex gap-2">
-            <Select v-model="activityTimeRange" :options="timeRangeOptions" optionLabel="name" placeholder="Thời gian" class="w-48" />
-            <MultiSelect v-model="activityTypes" :options="activityTypeOptions" optionLabel="name" placeholder="Loại hoạt động" class="w-48" />
-          </div>
-        </div>
-        <DataTable :value="getFilteredActivityHistory(selectedUser)" class="mt-2" :paginator="true" :rows="10">
-          <Column field="date" header="Thời gian" sortable>
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.date) }}
-            </template>
-          </Column>
-          <Column field="type" header="Loại hoạt động" sortable>
-            <template #body="slotProps">
-              <Tag :value="activityTypeOptions.find(t => t.value === slotProps.data.type)?.name || slotProps.data.type" />
-            </template>
-          </Column>
-          <Column field="action" header="Hành động" sortable></Column>
-          <Column field="details" header="Chi tiết"></Column>
-          <Column field="ip" header="IP" v-if="selectedUser.role === 'Admin'"></Column>
-          <Column field="device" header="Thiết bị" v-if="selectedUser.role === 'Admin'"></Column>
-        </DataTable>
       </div>
     </Dialog>
 
@@ -167,37 +173,27 @@
         <div class="grid">
           <div class="col-6">
             <p class="font-bold">Thông tin cửa hàng</p>
-            <p>Tên cửa hàng: {{ selectedVendor.name }}</p>
-            <p>Chủ cửa hàng: {{ selectedVendor.owner }}</p>
-            <p>Email: {{ selectedVendor.email }}</p>
-            <p>Số điện thoại: {{ selectedVendor.phone }}</p>
-            <p>Ngày tham gia: {{ formatDate(selectedVendor.joinDate) }}</p>
+            <p>Tên cửa hàng: {{ selectedVendor.name || 'Chưa có tên' }}</p>
+            <p>Mô tả: {{ selectedVendor.description || 'Chưa có mô tả' }}</p>
+            <p>Địa chỉ: {{ selectedVendor.address || 'Chưa có địa chỉ' }}</p>
+            <p>Email: {{ selectedVendor.email || 'Chưa có email' }}</p>
+            <p>Số điện thoại: {{ selectedVendor.phone || 'Chưa có số điện thoại' }}</p>
+            <p>Ngày tạo: {{ formatDate(new Date(selectedVendor.createdAt)) }}</p>
           </div>
           <div class="col-6">
             <p class="font-bold">Thông tin tài khoản</p>
-            <p>Trạng thái: <Tag :severity="getStatusSeverity(selectedVendor.status)" :value="selectedVendor.status" /></p>
-            <p>Số sản phẩm: {{ selectedVendor.productCount }}</p>
-            <p>Đánh giá: {{ selectedVendor.rating }}/5 ({{ selectedVendor.reviewCount }} đánh giá)</p>
+            <p>Trạng thái: <Tag :severity="getStatusSeverity(selectedVendor.status)" :value="getStatusDisplayName(selectedVendor.status)" /></p>
+            <p>ID: {{ selectedVendor.id }}</p>
+            <p>Cập nhật lần cuối: {{ formatDate(new Date(selectedVendor.updatedAt)) }}</p>
           </div>
         </div>
-        <Divider />
-        <p class="font-bold mb-2">Thống kê bán hàng</p>
-        <DataTable :value="selectedVendor.salesStats" class="mt-2">
-          <Column field="period" header="Thời gian"></Column>
-          <Column field="orders" header="Số đơn hàng"></Column>
-          <Column field="revenue" header="Doanh thu">
-            <template #body="slotProps">
-              {{ formatPrice(slotProps.data.revenue) }}
-            </template>
-          </Column>
-        </DataTable>
       </div>
     </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -213,6 +209,8 @@ import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
 import { useToast } from 'primevue/usetoast';
 import MultiSelect from 'primevue/multiselect';
+import { vendorApi, type Vendor as ApiVendor } from '@/api/vendor';
+import { userApi, type UserProfile as ApiUser } from '@/api/user';
 
 const toast = useToast();
 const loading = ref(false);
@@ -222,8 +220,8 @@ const selectedStatus = ref(null);
 const filters = ref({});
 const userDetailsVisible = ref(false);
 const vendorDetailsVisible = ref(false);
-const selectedUser = ref<User | null>(null);
-const selectedVendor = ref<Vendor | null>(null);
+const selectedUser = ref<ApiUser | null>(null);
+const selectedVendor = ref<ApiVendor | null>(null);
 const activityTimeRange = ref<TimeRange | null>(null);
 const activityTypes = ref<ActivityType[]>([]);
 const activeTab = ref('0');
@@ -287,95 +285,151 @@ const userStatuses = [
   { name: 'Bị khóa' }
 ];
 
-const users = ref<User[]>([
-  {
-    id: 'U001',
-    name: 'Nguyễn Văn A',
-    email: 'nguyenvana@example.com',
-    phone: '0123456789',
-    role: 'Người dùng',
-    status: 'Hoạt động',
-    joinDate: new Date('2024-01-15'),
-    activityHistory: [
-      { 
-        date: new Date('2024-03-15'), 
-        action: 'Đăng nhập', 
-        details: 'IP: 192.168.1.1',
-        type: 'login',
-        ip: '192.168.1.1',
-        device: 'Chrome/Windows'
-      },
-      { 
-        date: new Date('2024-03-14'), 
-        action: 'Đặt hàng', 
-        details: 'Đơn hàng #ORD001',
-        type: 'order'
-      }
-    ]
-  },
-  {
-    id: 'U002',
-    name: 'Trần Thị B',
-    email: 'tranthib@example.com',
-    phone: '0987654321',
-    role: 'Admin',
-    status: 'Hoạt động',
-    joinDate: new Date('2024-02-01'),
-    activityHistory: [
-      { 
-        date: new Date('2024-03-15'), 
-        action: 'Quản lý đơn hàng', 
-        details: 'Cập nhật trạng thái đơn #ORD002',
-        type: 'order_management',
-        ip: '192.168.1.2',
-        device: 'Firefox/Windows'
-      },
-      { 
-        date: new Date('2024-03-14'), 
-        action: 'Quản lý người dùng', 
-        details: 'Khóa tài khoản U003',
-        type: 'user_management',
-        ip: '192.168.1.2',
-        device: 'Firefox/Windows'
-      }
-    ]
-  }
-]);
+// API data for users
+const users = ref<ApiUser[]>([]);
+const usersLoading = ref(false);
+const usersPagination = ref({
+  page: 0,
+  size: 10,
+  totalElements: 0,
+  totalPages: 0
+});
 
-const vendors = ref<Vendor[]>([
-  {
-    id: 'V001',
-    name: 'Shop Thời Trang A',
-    owner: 'Lê Văn C',
-    email: 'shopthoitranga@example.com',
-    phone: '0123456789',
-    status: 'Hoạt động',
-    joinDate: new Date('2024-01-01'),
-    productCount: 150,
-    rating: 4.5,
-    reviewCount: 120,
-    salesStats: [
-      { period: 'Tháng 3/2024', orders: 45, revenue: 15000000 },
-      { period: 'Tháng 2/2024', orders: 38, revenue: 12000000 }
-    ]
-  },
-  {
-    id: 'V002',
-    name: 'Shop Giày Dép B',
-    owner: 'Phạm Thị D',
-    email: 'shopgiaydepb@example.com',
-    phone: '0987654321',
-    status: 'Bị khóa',
-    joinDate: new Date('2024-02-15'),
-    productCount: 80,
-    rating: 4.2,
-    reviewCount: 45,
-    salesStats: [
-      { period: 'Tháng 3/2024', orders: 25, revenue: 8000000 },
-      { period: 'Tháng 2/2024', orders: 20, revenue: 6000000 }
-    ]
+// Load users from API
+const loadUsers = async () => {
+  try {
+    usersLoading.value = true;
+    const params: { page: number; size: number } = {
+      page: usersPagination.value.page,
+      size: usersPagination.value.size
+    };
+    
+    const response = await userApi.getUsers(params);
+    console.log('Users API Response:', response);
+    users.value = response.profiles;
+    usersPagination.value = {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages
+    };
+    console.log('Users Pagination state:', {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+      first: response.page * response.size
+    });
+  } catch (error) {
+    console.error('Error loading users:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể tải danh sách người dùng',
+      life: 3000
+    });
+  } finally {
+    usersLoading.value = false;
   }
-]);
+};
+
+// Handle user pagination
+const onUserPageChange = (event: { first: number; rows: number; page: number }) => {
+  console.log('User page change event:', event);
+  usersPagination.value.page = event.page;
+  usersPagination.value.size = event.rows;
+  loadUsers();
+};
+
+// API data
+const vendors = ref<ApiVendor[]>([]);
+const vendorsLoading = ref(false);
+const vendorsPagination = ref({
+  page: 0,
+  size: 5, // Match with API default size
+  totalElements: 0,
+  totalPages: 0
+});
+
+
+
+// Filter states
+const selectedVendorStatus = ref<'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED' | null>(null);
+const vendorSearchQuery = ref('');
+
+// Selection states
+const selectedVendors = ref<ApiVendor[]>([]);
+const bulkActionLoading = ref(false);
+
+// Vendor status options
+const vendorStatusOptions = [
+  { name: 'Chờ duyệt', value: 'PENDING' as const },
+  { name: 'Đã duyệt', value: 'APPROVED' as const },
+  { name: 'Từ chối', value: 'REJECTED' as const },
+  { name: 'Tạm khóa', value: 'SUSPENDED' as const }
+];
+
+// Load vendors from API
+const loadVendors = async () => {
+  try {
+    vendorsLoading.value = true;
+    const params: { page: number; size: number; status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED' } = {
+      page: vendorsPagination.value.page,
+      size: vendorsPagination.value.size
+    };
+    
+    if (selectedVendorStatus.value) {
+      params.status = selectedVendorStatus.value;
+    }
+    
+    const response = await vendorApi.getVendors(params);
+    console.log('API Response:', response);
+    vendors.value = response.vendors;
+    vendorsPagination.value = {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages
+    };
+    console.log('Pagination state:', {
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+      first: response.page * response.size
+    });
+  } catch (error) {
+    console.error('Error loading vendors:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể tải danh sách người bán',
+      life: 3000
+    });
+  } finally {
+    vendorsLoading.value = false;
+  }
+};
+
+// Watch for filter changes
+watch([selectedVendorStatus], () => {
+  vendorsPagination.value.page = 0; // Reset to first page
+  loadVendors();
+});
+
+// Load data on mount
+onMounted(() => {
+  loadUsers();
+  loadVendors();
+});
+
+// Handle vendor pagination
+const onVendorPageChange = (event: { first: number; rows: number; page: number }) => {
+  console.log('Page change event:', event);
+  vendorsPagination.value.page = event.page;
+  vendorsPagination.value.size = event.rows;
+  loadVendors();
+};
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('vi-VN', {
@@ -409,10 +463,79 @@ const getRoleSeverity = (role: string): 'info' | 'success' | 'warning' | 'danger
 
 const getStatusSeverity = (status: string): 'info' | 'success' | 'danger' | 'warning' | 'contrast' => {
   switch (status) {
+    case 'APPROVED':
+      return 'success';
+    case 'PENDING':
+      return 'warning';
+    case 'REJECTED':
+      return 'danger';
+    case 'SUSPENDED':
+      return 'danger';
     case 'Hoạt động':
       return 'success';
     case 'Bị khóa':
       return 'danger';
+    default:
+      return 'info';
+  }
+};
+
+const getStatusDisplayName = (status: string): string => {
+  switch (status) {
+    case 'APPROVED':
+      return 'Đã duyệt';
+    case 'PENDING':
+      return 'Chờ duyệt';
+    case 'REJECTED':
+      return 'Từ chối';
+    case 'SUSPENDED':
+      return 'Tạm khóa';
+    case 'Hoạt động':
+      return 'Hoạt động';
+    case 'Bị khóa':
+      return 'Bị khóa';
+    default:
+      return status;
+  }
+};
+
+const getRoleDisplayName = (role: string | null): string => {
+  if (!role) return 'Người dùng';
+  switch (role) {
+    case 'ADMIN':
+      return 'Admin';
+    case 'VENDOR':
+      return 'Người bán';
+    case 'USER':
+      return 'Người dùng';
+    default:
+      return role;
+  }
+};
+
+const getTypeDisplayName = (type: string | null): string => {
+  if (!type) return 'Chưa xác định';
+  switch (type) {
+    case 'CUSTOMER':
+      return 'Khách hàng';
+    case 'VENDOR':
+      return 'Người bán';
+    case 'ADMIN':
+      return 'Quản trị viên';
+    default:
+      return type;
+  }
+};
+
+const getTypeSeverity = (type: string | null): 'info' | 'success' | 'warning' | 'danger' | 'contrast' => {
+  if (!type) return 'info';
+  switch (type) {
+    case 'ADMIN':
+      return 'danger';
+    case 'VENDOR':
+      return 'warning';
+    case 'CUSTOMER':
+      return 'success';
     default:
       return 'info';
   }
@@ -439,7 +562,7 @@ const timeRangeOptions: TimeRange[] = [
   { name: '3 tháng gần nhất', value: 'last_3_months' }
 ];
 
-const viewUserDetails = (user: User) => {
+const viewUserDetails = (user: ApiUser) => {
   selectedUser.value = user;
   activityTimeRange.value = timeRangeOptions[0];
   activityTypes.value = [];
@@ -484,64 +607,136 @@ const getFilteredActivityHistory = (user: User) => {
   return filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
 };
 
-const viewVendorDetails = (vendor: Vendor) => {
+const viewVendorDetails = (vendor: ApiVendor) => {
   selectedVendor.value = vendor;
   vendorDetailsVisible.value = true;
 };
 
-const updateUserStatus = (user: User, newStatus: string) => {
-  // TODO: Implement API call to update user status
-  const index = users.value.findIndex(u => u.id === user.id);
-  if (index !== -1) {
-    users.value[index].status = newStatus;
+const updateUserStatus = async (user: ApiUser, newStatus: string) => {
+  try {
+    await userApi.updateUserStatus(user.userId, newStatus);
+    // Reload users to get updated data
+    await loadUsers();
     toast.add({
       severity: 'success',
       summary: 'Cập nhật thành công',
-      detail: `Người dùng ${user.name} đã được cập nhật trạng thái thành ${newStatus}`,
+      detail: `Người dùng ${user.fullName || user.username} đã được cập nhật trạng thái thành ${newStatus}`,
+      life: 3000
+    });
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể cập nhật trạng thái người dùng',
       life: 3000
     });
   }
 };
 
-const updateVendorStatus = (vendor: Vendor, newStatus: string) => {
-  // TODO: Implement API call to update vendor status
-  const index = vendors.value.findIndex(v => v.id === vendor.id);
-  if (index !== -1) {
-    vendors.value[index].status = newStatus;
+const updateVendorStatus = async (vendor: ApiVendor, newStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED') => {
+  try {
+    await vendorApi.updateVendorStatus(vendor.id, newStatus);
+    // Reload vendors to get updated data
+    await loadVendors();
     toast.add({
       severity: 'success',
       summary: 'Cập nhật thành công',
-      detail: `Cửa hàng ${vendor.name} đã được cập nhật trạng thái thành ${newStatus}`,
+      detail: `Cửa hàng ${vendor.name || 'N/A'} đã được cập nhật trạng thái thành ${newStatus}`,
+      life: 3000
+    });
+  } catch (error) {
+    console.error('Error updating vendor status:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể cập nhật trạng thái cửa hàng',
       life: 3000
     });
   }
 };
 
-const deleteUser = (user: User) => {
-  // TODO: Implement API call to delete user
-  const index = users.value.findIndex(u => u.id === user.id);
-  if (index !== -1) {
-    users.value.splice(index, 1);
+const deleteUser = async (user: ApiUser) => {
+  try {
+    await userApi.deleteUser(user.userId);
+    // Reload users to get updated data
+    await loadUsers();
     toast.add({
       severity: 'success',
       summary: 'Xóa thành công',
-      detail: `Người dùng ${user.name} đã được xóa`,
+      detail: `Người dùng ${user.fullName || user.username} đã được xóa`,
+      life: 3000
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể xóa người dùng',
       life: 3000
     });
   }
 };
 
-const deleteVendor = (vendor: Vendor) => {
-  // TODO: Implement API call to delete vendor
-  const index = vendors.value.findIndex(v => v.id === vendor.id);
-  if (index !== -1) {
-    vendors.value.splice(index, 1);
+const rejectVendor = async (vendor: ApiVendor) => {
+  try {
+    await vendorApi.updateVendorStatus(vendor.id, 'REJECTED');
+    // Reload vendors to get updated data
+    await loadVendors();
     toast.add({
       severity: 'success',
-      summary: 'Xóa thành công',
-      detail: `Cửa hàng ${vendor.name} đã được xóa`,
+      summary: 'Từ chối thành công',
+      detail: `Cửa hàng ${vendor.name || 'N/A'} đã được từ chối`,
       life: 3000
     });
+  } catch (error) {
+    console.error('Error rejecting vendor:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể từ chối cửa hàng',
+      life: 3000
+    });
+  }
+};
+
+const acceptSelectedVendors = async () => {
+  if (selectedVendors.value.length === 0) {
+    toast.add({
+      severity: 'warning',
+      summary: 'Cảnh báo',
+      detail: 'Vui lòng chọn ít nhất một cửa hàng để duyệt',
+      life: 3000
+    });
+    return;
+  }
+
+  try {
+    bulkActionLoading.value = true;
+    const vendorIds = selectedVendors.value.map(vendor => vendor.id);
+    
+    await vendorApi.acceptVendors(vendorIds);
+    
+    // Clear selection and reload data
+    selectedVendors.value = [];
+    await loadVendors();
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Duyệt thành công',
+      detail: `Đã duyệt ${vendorIds.length} cửa hàng`,
+      life: 3000
+    });
+  } catch (error) {
+    console.error('Error accepting vendors:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể duyệt các cửa hàng đã chọn',
+      life: 3000
+    });
+  } finally {
+    bulkActionLoading.value = false;
   }
 };
 </script>

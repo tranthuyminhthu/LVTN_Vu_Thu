@@ -10,9 +10,14 @@ import 'primeflex/primeflex.css';
 import 'primeicons/primeicons.css'
 import { definePreset } from '@primeuix/themes';
 import ToastService from 'primevue/toastservice';
-
-
+import ConfirmationService from 'primevue/confirmationservice';
+import { useAuth } from './composables/useAuth'
+import { createPinia } from 'pinia'
 const app = createApp(App)
+
+const pinia = createPinia()
+app.use(pinia)
+
 
 const MyPreset = definePreset(Aura, {
     semantic: {
@@ -39,4 +44,10 @@ app.use(PrimeVue, {
     }
 });
 app.use(ToastService);
+app.use(ConfirmationService);
+
 app.mount('#app')
+
+// Khởi tạo authentication sau khi app đã mount
+const { initializeAuth } = useAuth()
+initializeAuth()
