@@ -3,13 +3,12 @@ package org.example.notification_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.notification_service.entity.NotificationEntity;
-import org.example.notification_service.service.SmsService;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SmsServiceImpl {
+public class SmsService {
     
     public void sendSms(NotificationEntity notification) {
         try {

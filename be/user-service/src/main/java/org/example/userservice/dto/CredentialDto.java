@@ -1,2 +1,12 @@
-package org.example.userservice.dto;public class CredentialDto {
+package org.example.userservice.dto;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class CredentialDto {
+    private String type;
+    private String value;
+    private Boolean temporary;
 }

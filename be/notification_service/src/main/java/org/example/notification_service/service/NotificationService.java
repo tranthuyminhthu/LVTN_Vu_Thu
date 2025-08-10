@@ -2,10 +2,15 @@ package org.example.notification_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.notification_service.dto.NotificationListResponseDto;
 import org.example.notification_service.dto.NotificationRequestDto;
 import org.example.notification_service.entity.NotificationEntity;
 import org.example.notification_service.repository.NotificationRepository;
+import org.example.notification_service.service.impl.EmailService;
+import org.example.notification_service.service.impl.PushNotificationService;
+import org.example.notification_service.service.impl.SmsService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +18,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import org.springframework.data.domain.Page;
 
 @Service
 @RequiredArgsConstructor
@@ -95,6 +102,54 @@ public class NotificationService {
     public Optional<NotificationEntity> getNotificationById(Long id) {
         return notificationRepository.findById(id);
     }
+
+    public List<NotificationEntity> getAllNotifications(int page, int size, String type, String status, String category) {
+        try {
+            Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+            
+            // Nếu có filter, sử dụng query tùy chỉnh
+            if (type != null || status != null || category != null) {
+                return notificationRepository.findAllWithFilters(type, status, category, pageable);
+            }
+            
+            // Nếu không có filter, lấy tất cả
+            return notificationRepository.findAll(pageable).getContent();
+            
+        } catch (Exception e) {
+            log.error("Error getting all notifications: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to get all notifications", e);
+        }
+    }
+
+    public List<NotificationEntity> getAllNotificationsSimple(int page, int size) {
+        try {
+            Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+            return notificationRepository.findAll(pageable).getContent();
+        } catch (Exception e) {
+            log.error("Error getting all notifications simple: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to get all notifications", e);
+        }
+    }
+
+    public NotificationListResponseDto getAllNotificationsWithPagination(int page, int size) {
+        try {
+            Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+            Page<NotificationEntity> notificationPage = notificationRepository.findAll(pageable);
+            
+            return new NotificationListResponseDto(
+                notificationPage.getContent(),
+                notificationPage.getNumber(),
+                notificationPage.getSize(),
+                notificationPage.getTotalElements(),
+                notificationPage.getTotalPages(),
+                notificationPage.hasNext(),
+                notificationPage.hasPrevious()
+            );
+        } catch (Exception e) {
+            log.error("Error getting all notifications with pagination: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to get all notifications", e);
+        }
+    }
     
     public NotificationEntity markAsRead(Long notificationId) {
         NotificationEntity notification = notificationRepository.findById(notificationId)
@@ -170,6 +225,36 @@ public class NotificationService {
     public int cleanupOldNotifications(LocalDateTime cutoffDate) {
         return notificationRepository.deleteOldNotifications(cutoffDate);
     }
+
+    public long getTotalNotificationCount() {
+        return notificationRepository.count();
+    }
+
+    public long getUnreadNotificationCount() {
+        return notificationRepository.countByStatusNot(NotificationEntity.NotificationStatus.READ);
+    }
+
+    public long getTodayNotificationCount() {
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        return notificationRepository.countByCreatedAtGreaterThanEqual(startOfDay);
+    }
+    
+    /**
+     * Kiểm tra xem notification đã được xử lý chưa
+     */
+    public boolean isNotificationProcessed(Long notificationId) {
+        try {
+            Optional<NotificationEntity> notification = notificationRepository.findById(notificationId);
+            if (notification.isPresent()) {
+                NotificationEntity.NotificationStatus status = notification.get().getStatus();
+                return status == NotificationEntity.NotificationStatus.SENT;
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Error checking notification status: id={}, error={}", notificationId, e.getMessage());
+            return false;
+        }
+    }
     
     private NotificationEntity createNotificationEntity(NotificationRequestDto request) {
         NotificationEntity notification = new NotificationEntity();
@@ -198,11 +283,16 @@ public class NotificationService {
         String topic = getTopicForNotificationType(notification.getType());
         String key = notification.getId().toString();
         
-        kafkaTemplate.send(topic, key, notification)
-                .addCallback(
-                    result -> log.info("Notification sent to Kafka topic {} successfully: id={}", topic, notification.getId()),
-                    ex -> log.error("Failed to send notification to Kafka topic {}: id={}, error={}", topic, notification.getId(), ex.getMessage())
-                );
+        CompletableFuture<?> future = kafkaTemplate.send(topic, key, notification);
+        
+        future.whenComplete((result, ex) -> {
+            if (ex == null) {
+                log.info("Notification sent to Kafka topic {} successfully: id={}", topic, notification.getId());
+            } else {
+                log.error("Failed to send notification to Kafka topic {}: id={}, error={}", 
+                         topic, notification.getId(), ex.getMessage());
+            }
+        });
     }
     
     private String getTopicForNotificationType(NotificationEntity.NotificationType type) {
@@ -227,10 +317,15 @@ public class NotificationService {
                 notification.getId(), notification.getRetryCount());
         
         // Send to retry topic with delay
-        kafkaTemplate.send(retryTopic, notification.getId().toString(), notification)
-                .addCallback(
-                    result -> log.info("Retry notification sent to Kafka topic successfully: id={}", notification.getId()),
-                    ex -> log.error("Failed to send retry notification to Kafka topic: id={}, error={}", notification.getId(), ex.getMessage())
-                );
+        CompletableFuture<?> future = kafkaTemplate.send(retryTopic, notification.getId().toString(), notification);
+        
+        future.whenComplete((result, ex) -> {
+            if (ex == null) {
+                log.info("Retry notification sent to Kafka topic successfully: id={}", notification.getId());
+            } else {
+                log.error("Failed to send retry notification to Kafka topic: id={}, error={}", 
+                         notification.getId(), ex.getMessage());
+            }
+        });
     }
 } 

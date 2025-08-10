@@ -32,6 +32,12 @@ public class NotificationKafkaListener {
         log.info("Processing email notification: id={}, recipient={}", notification.getId(), notification.getRecipient());
         
         try {
+            // Kiểm tra xem notification đã được xử lý chưa
+            if (notificationService.isNotificationProcessed(notification.getId())) {
+                log.info("Notification {} already processed, skipping", notification.getId());
+                return;
+            }
+            
             notificationService.processNotification(notification);
         } catch (Exception e) {
             log.error("Failed to process email notification: id={}, error={}", notification.getId(), e.getMessage(), e);

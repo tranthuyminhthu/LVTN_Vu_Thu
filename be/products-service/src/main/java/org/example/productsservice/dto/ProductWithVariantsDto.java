@@ -9,4 +9,4 @@ public class ProductWithVariantsDto {
     private String description;
     private Double price;
     private List<ProductVariantRequestDto> variants;
-} 
+}

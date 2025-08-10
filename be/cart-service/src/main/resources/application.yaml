@@ -6,3 +6,5 @@ spring:
       uri: mongodb://admin:admin@localhost:27019/cart?authSource=admin
 server:
   port: 8083
+service:
+  product: http://localhost:8080

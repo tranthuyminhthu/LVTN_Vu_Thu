@@ -1,2 +1,2 @@
 rootProject.name = 'be'
-include()
+include('user-service', 'products-service', 'api-gateway', 'auth-service', 'cart-service', 'chat-service', 'order-service')

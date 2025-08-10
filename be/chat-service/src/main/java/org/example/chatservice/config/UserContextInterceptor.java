@@ -27,17 +27,6 @@ public class UserContextInterceptor implements HandlerInterceptor {
         userContext.setEmail(email);
         userContext.setUsername(username);
         userContext.setRolesFromHeader(rolesHeader);
-
-        // Log current user roles
-        if (userId != null) {
-            log.info("Chat Service - User {} (email: {}) has roles: {}", 
-                    userId, 
-                    email != null ? email : "N/A", 
-                    userContext.getRoles() != null ? userContext.getRoles() : "No roles");
-        } else {
-            log.info("Chat Service - Anonymous request - no user context");
-        }
-
         return true;
     }
 } 

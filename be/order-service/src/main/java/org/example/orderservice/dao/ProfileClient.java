@@ -1,15 +1,15 @@
 package org.example.orderservice.dao;
 
+import org.example.orderservice.dto.VendorResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "cart-client", url = "${service.cart-service}")
-public interface CartClient {
+@FeignClient(name = "profile-client", url = "${service.profile-service}")
+public interface ProfileClient {
 
-    @DeleteMapping(value = "/carts/items", consumes = "application/json")
-    ResponseEntity<?> deleteCart(@RequestBody List<String> productIds);
+    @GetMapping(value = "/internal/profile/vendors/{vendorId}")
+    ResponseEntity<VendorResponseDto> getVendorProfile(@PathVariable String vendorId);
 }

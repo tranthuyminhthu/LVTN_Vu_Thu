@@ -1,4 +1,4 @@
-package org.example.productsservice.dto;
+package org.example.orderservice.dto;
 
 import lombok.Data;
 

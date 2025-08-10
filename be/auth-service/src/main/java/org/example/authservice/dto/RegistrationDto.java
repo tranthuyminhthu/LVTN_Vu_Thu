@@ -1,4 +1,4 @@
-package org.example.userservice.dto;
+package org.example.authservice.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +11,5 @@ public class RegistrationDto {
     private String email;
     private String username;
     private String password;
-    private String firstName;
-    private String lastName;
-    private LocalDate dob;
+    private Boolean isVendor;
 }

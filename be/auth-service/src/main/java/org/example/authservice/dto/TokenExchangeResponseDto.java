@@ -1,4 +1,4 @@
-package org.example.userservice.dto;
+package org.example.authservice.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -14,4 +14,5 @@ public class TokenExchangeResponseDto {
     private String tokenType;
     private String idToken;
     private String scope;
+    private String sessionState;
 }

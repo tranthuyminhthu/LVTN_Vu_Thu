@@ -16,7 +16,7 @@ db.cart_items.createIndex({ "createdAt": 1 });
 // Create a user for the application
 db.createUser({
   user: "cart_user",
-  pwd: "cart_password",
+  pwd: process.env.CART_PASSWORD || "cart_password",
   roles: [
     { role: "readWrite", db: "cart" }
   ]

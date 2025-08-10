@@ -1,4 +1,4 @@
-package org.example.userservice.dto;
+package org.example.authservice.dto;
 
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +10,5 @@ public class LoginResponseDto {
     private String refreshToken;
     private String tokenType;
     private Long expiresIn;
-    private String userId;
-    private String username;
-    private String email;
+    private ProfileDto userProfile;
 } 

@@ -1,9 +1,10 @@
 package org.example.apigateway.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.shaded.gson.internal.LinkedTreeMap;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -14,7 +15,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class UserIdFilter implements GlobalFilter, Ordered {
@@ -27,13 +27,13 @@ public class UserIdFilter implements GlobalFilter, Ordered {
                 .filter(auth -> auth.getPrincipal() instanceof Jwt)
                 .map(auth -> (Jwt) auth.getPrincipal())
                 .map(jwt -> {
-                    // Trích xuất thông tin từ JWT token
-                    String userId = extractUserIdFromJwt(jwt);
+                    String userId = jwt.getClaimAsString("sub");
                     List<String> roles = extractRolesFromJwt(jwt);
                     String email = jwt.getClaimAsString("email");
                     String username = jwt.getClaimAsString("preferred_username");
                     
-                    // Thêm thông tin vào header
+                    System.out.println("Current user roles: " + roles);
+                    
                     ServerHttpRequest request = exchange.getRequest();
                     ServerHttpRequest mutatedRequest = request.mutate()
                             .header("X-User-ID", userId)
@@ -48,52 +48,20 @@ public class UserIdFilter implements GlobalFilter, Ordered {
                 .flatMap(chain::filter);
     }
 
-    private String extractUserIdFromJwt(Jwt jwt) {
-        // Thử các claim khác nhau để lấy userId
-        String userId = jwt.getClaimAsString("sub");
-        if (userId == null) {
-            userId = jwt.getClaimAsString("user_id");
-        }
-        if (userId == null) {
-            userId = jwt.getClaimAsString("id");
-        }
-        if (userId == null) {
-            // Fallback: sử dụng subject nếu không có userId cụ thể
-            userId = jwt.getSubject();
-        }
-        return userId;
-    }
-
     private List<String> extractRolesFromJwt(Jwt jwt) {
-        // Keycloak thường lưu roles trong claim "realm_access.roles" hoặc "resource_access.{client-id}.roles"
-        List<String> roles = jwt.getClaimAsStringList("realm_access.roles");
-        
-        if (roles == null || roles.isEmpty()) {
-            // Thử lấy từ resource_access
-            try {
-                Object resourceAccess = jwt.getClaim("resource_access");
-                if (resourceAccess != null) {
-                    // Có thể cần parse JSON để lấy roles từ resource_access
-                    // Đây là cách đơn giản, bạn có thể cần implement phức tạp hơn
-                    roles = List.of("USER"); // Default role
-                }
-            } catch (Exception e) {
-                // Fallback to default role
-                roles = List.of("USER");
-            }
+        try {
+            LinkedTreeMap<String, List<String>> realmAccess = jwt.getClaim("realm_access");
+            return realmAccess != null && realmAccess.containsKey("roles")
+                    ? realmAccess.get("roles")
+                    : List.of("USER");
+        } catch (Exception e) {
+            System.out.println("Error extracting roles from realm_access: " + e.getMessage());
         }
-        
-        // Nếu vẫn không có roles, sử dụng default
-        if (roles == null || roles.isEmpty()) {
-            roles = List.of("USER");
-        }
-        
-        return roles;
+        return List.of("USER");
     }
 
     @Override
     public int getOrder() {
-        // Đảm bảo filter này chạy sau authentication nhưng trước routing
         return Ordered.HIGHEST_PRECEDENCE + 100;
     }
 } 

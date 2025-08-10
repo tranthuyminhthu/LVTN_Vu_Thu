@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.productsservice.dto.ProductApprovalEventDto;
 import org.example.productsservice.service.NotificationEventService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,8 @@ import java.util.Map;
 @Slf4j
 public class KafkaTestController {
 
-    private final KafkaTemplate<String, ProductApprovalEventDto> kafkaTemplate;
+    @Autowired(required = false)
+    private KafkaTemplate<String, Object> kafkaTemplate;
     private final NotificationEventService notificationEventService;
 
     @PostMapping("/send-product-approval")
@@ -62,18 +64,22 @@ public class KafkaTestController {
 
             log.info("Sending direct Kafka message to topic: {}, key: {}", topic, key);
             
-            // Gửi trực tiếp qua KafkaTemplate
-            kafkaTemplate.send(topic, key, event)
-                .whenComplete((result, ex) -> {
-                    if (ex == null) {
-                        log.info("Direct Kafka message sent successfully to topic: {}, partition: {}, offset: {}", 
-                                result.getRecordMetadata().topic(), 
-                                result.getRecordMetadata().partition(), 
-                                result.getRecordMetadata().offset());
-                    } else {
-                        log.error("Failed to send direct Kafka message: {}", ex.getMessage(), ex);
-                    }
-                });
+            // Gửi trực tiếp qua KafkaTemplate nếu có
+            if (kafkaTemplate != null) {
+                kafkaTemplate.send(topic, key, event)
+                    .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("Direct Kafka message sent successfully to topic: {}, partition: {}, offset: {}", 
+                                    result.getRecordMetadata().topic(), 
+                                    result.getRecordMetadata().partition(), 
+                                    result.getRecordMetadata().offset());
+                        } else {
+                            log.error("Failed to send direct Kafka message: {}", ex.getMessage(), ex);
+                        }
+                    });
+            } else {
+                log.info("Kafka not available - Direct Kafka message would be sent to topic: {}, key: {}", topic, key);
+            }
 
             return ResponseEntity.ok(Map.of(
                 "message", "Direct Kafka message sent successfully",
@@ -92,10 +98,11 @@ public class KafkaTestController {
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
+        String kafkaStatus = kafkaTemplate != null ? "configured" : "not-available";
         return ResponseEntity.ok(Map.of(
             "status", "UP",
             "service", "products-service",
-            "kafka", "configured",
+            "kafka", kafkaStatus,
             "timestamp", LocalDateTime.now().toString()
         ));
     }

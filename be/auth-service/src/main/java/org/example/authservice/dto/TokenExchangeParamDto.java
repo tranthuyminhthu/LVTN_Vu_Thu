@@ -1,4 +1,4 @@
-package org.example.userservice.dto;
+package org.example.authservice.dto;
 
 import lombok.Builder;
 import lombok.Data;
@@ -12,4 +12,5 @@ public class TokenExchangeParamDto {
     private String username;
     private String password;
     private String scope;
+    private String refresh_token;
 }

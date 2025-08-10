@@ -1,5 +1,6 @@
 package org.example.productsservice.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -8,6 +9,7 @@ import java.util.List;
 
 @Component
 @RequestScope
+@Slf4j
 public class UserContext {
     private String userId;
     private String email;
@@ -67,4 +69,15 @@ public class UserContext {
         if (this.roles == null) return false;
         return Arrays.stream(roles).allMatch(this.roles::contains);
     }
-} 
+
+    public void logCurrentUserRoles() {
+        if (userId != null) {
+            log.info("Products Service - User {} (email: {}) has roles: {}",
+                    userId,
+                    email != null ? email : "N/A",
+                    roles != null ? roles : "No roles");
+        } else {
+            log.info("Products Service - Anonymous request - no user context");
+        }
+    }
+}

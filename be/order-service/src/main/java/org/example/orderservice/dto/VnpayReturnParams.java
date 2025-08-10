@@ -6,6 +6,7 @@ import lombok.Data;
 public class VnpayReturnParams {
     private String vnp_Amount;
     private String vnp_BankCode;
+    private String vnp_BankTranNo;
     private String vnp_CardType;
     private String vnp_OrderInfo;
     private String vnp_PayDate;

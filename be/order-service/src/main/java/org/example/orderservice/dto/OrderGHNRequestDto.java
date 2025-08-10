@@ -30,7 +30,6 @@ public class OrderGHNRequestDto {
     private Integer length;
     private Integer width;
     private Integer height;
-    private Integer deliver_station_id;
     private Integer service_id;
     private Integer service_type_id;
     private String coupon;

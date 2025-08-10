@@ -3,11 +3,14 @@ spring:
     name: user-service
   data:
     mongodb:
-      uri: mongodb://admin:admin@localhost:27018/user?authSource=admin
+      uri: mongodb://admin:${MONGODB_PASSWORD:xxxx}@localhost:27018/user?authSource=admin
 server:
   port: 8081
 
 idp:
-  url: http://localhost:8180
-  client-id: test
-  client-secret: rPhbE1REFFtfKTHSY8LmE1lGOiSeWiYy
+  url: ${KEYCLOAK_URL:xxxx}
+  client-id: ${KEYCLOAK_CLIENT_ID:xxxx}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:xxxx}
+
+service:
+  order-service: http://localhost:8085

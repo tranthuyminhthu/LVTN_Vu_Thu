@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController("apiFavoriteController")
@@ -66,6 +67,28 @@ public class FavoriteController {
             String userId = userContext.getUserId();
             boolean isFavorite = favoriteService.isFavorite(userId, productId);
             return ResponseEntity.ok(isFavorite);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/users-by-products")
+    @RequireRole({"ADMIN", "MANAGER"})
+    public ResponseEntity<List<String>> getUsersByProductIds(@RequestParam List<String> productIds) {
+        try {
+            List<String> userIds = favoriteService.getUsersByProductIds(productIds);
+            return ResponseEntity.ok(userIds);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/users-by-vendor")
+    @RequireRole({"ADMIN", "MANAGER"})
+    public ResponseEntity<List<String>> getUsersByVendorId(@RequestParam String vendorId) {
+        try {
+            List<String> userIds = favoriteService.getUsersByVendorId(vendorId);
+            return ResponseEntity.ok(userIds);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

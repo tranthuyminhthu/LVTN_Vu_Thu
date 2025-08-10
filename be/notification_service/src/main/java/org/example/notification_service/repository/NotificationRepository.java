@@ -80,4 +80,24 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
         AND status IN ('SENT', 'READ')
         """, nativeQuery = true)
     int deleteOldNotifications(@Param("cutoffDate") LocalDateTime cutoffDate);
+    
+    // Find all notifications with optional filters
+    @Query(value = """
+        SELECT n.* FROM notifications n 
+        WHERE (:type IS NULL OR n.type = :type)
+        AND (:status IS NULL OR n.status = :status)
+        AND (:category IS NULL OR n.category = :category)
+        ORDER BY n.created_at DESC
+        """, nativeQuery = true)
+    List<NotificationEntity> findAllWithFilters(
+        @Param("type") String type,
+        @Param("status") String status,
+        @Param("category") String category,
+        Pageable pageable
+    );
+    
+    // Count methods
+    long countByStatusNot(NotificationEntity.NotificationStatus status);
+    
+    long countByCreatedAtGreaterThanEqual(LocalDateTime createdAt);
 } 

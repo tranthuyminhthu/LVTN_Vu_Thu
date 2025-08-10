@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 @Data
 public class VendorResponseDto {
     private String id;
+    private Integer shopId;
     private String name;
     private String description;
     private String address;
@@ -17,7 +18,7 @@ public class VendorResponseDto {
     private String districtName;
     private String provinceName;
     private Integer districtId;
-    private Integer wardId;
+    private String wardId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 } 

@@ -1,4 +1,4 @@
-package org.example.userservice.dto;
+package org.example.authservice.dto;
 
 import lombok.Builder;
 import lombok.Data;

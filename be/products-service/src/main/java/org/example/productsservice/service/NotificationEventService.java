@@ -8,6 +8,7 @@ import org.example.productsservice.dto.ProductApprovalEventDto;
 import org.example.productsservice.entity.FavoriteEntity;
 import org.example.productsservice.entity.ProductEntity;
 import org.example.productsservice.util.UserContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,8 @@ import java.util.List;
 @Slf4j
 public class NotificationEventService {
 
-    private final KafkaTemplate<String, ProductApprovalEventDto> kafkaTemplate;
+    @Autowired(required = false)
+    private KafkaTemplate<String, Object> kafkaTemplate;
     private final FavoriteDao favoriteDao;
     private final ProductDao productDao;
     private final UserContext userContext;
@@ -46,15 +48,19 @@ public class NotificationEventService {
                 vendorName
             );
 
-            // Gửi event qua Kafka
-            kafkaTemplate.send(productApprovalTopic, "product-approval", event)
-                .whenComplete((result, ex) -> {
-                    if (ex == null) {
-                        log.info("Product approval event sent successfully for products: {} from vendor: {}", productIds, vendorId);
-                    } else {
-                        log.error("Failed to send product approval event: {}", ex.getMessage(), ex);
-                    }
-                });
+            // Gửi event qua Kafka nếu có
+            if (kafkaTemplate != null) {
+                kafkaTemplate.send(productApprovalTopic, "product-approval", event)
+                    .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("Product approval event sent successfully for products: {} from vendor: {}", productIds, vendorId);
+                        } else {
+                            log.error("Failed to send product approval event: {}", ex.getMessage(), ex);
+                        }
+                    });
+            } else {
+                log.info("Kafka not available - Product approval event would be sent for products: {} from vendor: {}", productIds, vendorId);
+            }
 
         } catch (Exception e) {
             log.error("Error sending product approval notification: {}", e.getMessage(), e);

@@ -11,7 +11,6 @@ Notification Service là một microservice được thiết kế để xử lý
 - **Spring Boot**: Framework chính
 - **Spring Kafka**: Kafka integration
 - **Spring Mail**: Email sending
-- **pgAdmin**: Database management UI
 
 ### Notification Types:
 - **EMAIL**: Gửi email thông qua SMTP
@@ -28,7 +27,7 @@ Notification Service là một microservice được thiết kế để xử lý
 
 ### 2. Setup Infrastructure
 
-#### Start PostgreSQL và pgAdmin:
+#### Start PostgreSQL:
 ```bash
 docker-compose -f docker-compose-postgresql.yml up -d
 ```
@@ -111,7 +110,7 @@ GET /api/notifications/stats?since=2024-01-01T00:00:00
 ```yaml
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/notification_db
+    url: jdbc:postgresql://localhost:5434/notification_db
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
@@ -242,11 +241,6 @@ GET /actuator/health
 GET /actuator/metrics
 ```
 
-### Database Monitoring
-- **pgAdmin**: http://localhost:5050
-  - Email: admin@admin.com
-  - Password: admin
-
 ### Kafka Monitoring
 - **Kafka UI**: http://localhost:8080
 
@@ -299,7 +293,7 @@ docker build -t notification-service .
 # Run container
 docker run -d \
   --name notification-service \
-  -p 8085:8085 \
+  -p 8086:8086 \
   --env-file .env \
   notification-service
 ```
@@ -323,7 +317,7 @@ psql -h localhost -U postgres -d notification_db < init-schema.sql
 docker-compose -f docker-compose-postgresql.yml ps
 
 # Test connection
-psql -h localhost -U postgres -d notification_db
+psql -h localhost -p 5434 -U postgres -d notification_db
 ```
 
 #### 2. Kafka Connection

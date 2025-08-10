@@ -1,26 +1,25 @@
 package org.example.orderservice.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
 @Table(name = "order_items")
+@Data
 public class OrderItemEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @ManyToOne
     @JoinColumn(name = "order_id")
     private OrderEntity order;
 
-    private Long productId;
+    private String productSku;
     private String productName;
     private Integer quantity;
     private Double price;
     private Double totalPrice;
+    private String image;
 
-    // Getters, setters, constructors
-    public OrderItemEntity() {}
-
-    // ... getters and setters ...
 } 

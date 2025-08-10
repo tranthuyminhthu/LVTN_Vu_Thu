@@ -1,4 +1,4 @@
-package org.example.productsservice.annotation;
+package org.example.chatservice.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

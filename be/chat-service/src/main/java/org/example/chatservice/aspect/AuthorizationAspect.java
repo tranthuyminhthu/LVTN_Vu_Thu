@@ -1,12 +1,12 @@
-package org.example.productsservice.aspect;
+package org.example.chatservice.aspect;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.example.productsservice.annotation.RequireRole;
-import org.example.productsservice.util.UserContext;
+import org.example.chatservice.annotation.RequireRole;
+import org.example.chatservice.util.UserContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;

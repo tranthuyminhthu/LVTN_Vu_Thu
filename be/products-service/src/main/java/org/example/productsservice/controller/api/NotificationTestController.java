@@ -2,6 +2,7 @@ package org.example.productsservice.controller.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,8 @@ import java.util.Map;
 @Slf4j
 public class NotificationTestController {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    @Autowired(required = false)
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @PostMapping("/send-email-notification")
     public ResponseEntity<Map<String, String>> sendEmailNotification(@RequestBody Map<String, Object> request) {
@@ -27,18 +29,22 @@ public class NotificationTestController {
             log.info("Notification details: userId={}, recipient={}, title={}", 
                     request.get("userId"), request.get("recipient"), request.get("title"));
             
-            // Gửi trực tiếp Map object qua Kafka
-            kafkaTemplate.send(topic, key, request)
-                .whenComplete((result, ex) -> {
-                    if (ex == null) {
-                        log.info("Email notification sent successfully from products-service to topic: {}, partition: {}, offset: {}", 
-                                result.getRecordMetadata().topic(), 
-                                result.getRecordMetadata().partition(), 
-                                result.getRecordMetadata().offset());
-                    } else {
-                        log.error("Failed to send email notification from products-service: {}", ex.getMessage(), ex);
-                    }
-                });
+            // Gửi trực tiếp Map object qua Kafka nếu có
+            if (kafkaTemplate != null) {
+                kafkaTemplate.send(topic, key, request)
+                    .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("Email notification sent successfully from products-service to topic: {}, partition: {}, offset: {}", 
+                                    result.getRecordMetadata().topic(), 
+                                    result.getRecordMetadata().partition(), 
+                                    result.getRecordMetadata().offset());
+                        } else {
+                            log.error("Failed to send email notification from products-service: {}", ex.getMessage(), ex);
+                        }
+                    });
+            } else {
+                log.info("Kafka not available - Email notification would be sent to topic: {}, key: {}", topic, key);
+            }
 
             return ResponseEntity.ok(Map.of(
                 "message", "Email notification sent successfully from products-service",
@@ -76,15 +82,19 @@ public class NotificationTestController {
 
             log.info("Sending password reset email from products-service to: {}", request.get("recipient"));
             
-            // Gửi qua Kafka
-            kafkaTemplate.send(topic, key, notification)
-                .whenComplete((result, ex) -> {
-                    if (ex == null) {
-                        log.info("Password reset email sent successfully from products-service");
-                    } else {
-                        log.error("Failed to send password reset email from products-service: {}", ex.getMessage(), ex);
-                    }
-                });
+            // Gửi qua Kafka nếu có
+            if (kafkaTemplate != null) {
+                kafkaTemplate.send(topic, key, notification)
+                    .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("Password reset email sent successfully from products-service");
+                        } else {
+                            log.error("Failed to send password reset email from products-service: {}", ex.getMessage(), ex);
+                        }
+                    });
+            } else {
+                log.info("Kafka not available - Password reset email would be sent to: {}", request.get("recipient"));
+            }
 
             return ResponseEntity.ok(Map.of(
                 "message", "Password reset email sent successfully from products-service",
@@ -126,15 +136,19 @@ public class NotificationTestController {
 
             log.info("Sending product approval email from products-service to: {}", request.get("recipient"));
             
-            // Gửi qua Kafka
-            kafkaTemplate.send(topic, key, notification)
-                .whenComplete((result, ex) -> {
-                    if (ex == null) {
-                        log.info("Product approval email sent successfully from products-service");
-                    } else {
-                        log.error("Failed to send product approval email from products-service: {}", ex.getMessage(), ex);
-                    }
-                });
+            // Gửi qua Kafka nếu có
+            if (kafkaTemplate != null) {
+                kafkaTemplate.send(topic, key, notification)
+                    .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("Product approval email sent successfully from products-service");
+                        } else {
+                            log.error("Failed to send product approval email from products-service: {}", ex.getMessage(), ex);
+                        }
+                    });
+            } else {
+                log.info("Kafka not available - Product approval email would be sent to: {}", request.get("recipient"));
+            }
 
             return ResponseEntity.ok(Map.of(
                 "message", "Product approval email sent successfully from products-service",
@@ -153,10 +167,11 @@ public class NotificationTestController {
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
+        String kafkaStatus = kafkaTemplate != null ? "configured" : "not-available";
         return ResponseEntity.ok(Map.of(
             "status", "UP",
             "service", "products-service",
-            "kafka", "configured",
+            "kafka", kafkaStatus,
             "timestamp", LocalDateTime.now().toString()
         ));
     }

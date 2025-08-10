@@ -4,11 +4,19 @@ server:
 
   port: 8082
 
+spring:
+  data:
+    mongodb:
+      uri: mongodb://admin:password@localhost:27021/auth_service_db?authSource=admin
+
 idp:
   url: http://localhost:8180
-  client-id: test
-  client-secret: rPhbE1REFFtfKTHSY8LmE1lGOiSeWiYy
+  client-id: web
+  client-secret: tD8h7dy0cCk3wuAgkONTjMQwTthg9DA1
 
 service:
   profile: http://localhost:8081
   carts: http://localhost:8083
+  notification: http://localhost:8888
+fe:
+  url: http://localhost:5173

@@ -20,11 +20,11 @@ public class NotificationEntity {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NotificationType type; // EMAIL, SMS, PUSH, IN_APP
+    private NotificationType type;
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NotificationCategory category; // ORDER, PROMOTION, SYSTEM, etc.
+    private NotificationCategory category;
     
     @Column(nullable = false)
     private String title;
@@ -90,7 +90,7 @@ public class NotificationEntity {
     }
     
     public enum NotificationCategory {
-        ORDER, PROMOTION, SYSTEM, SECURITY, MARKETING
+        ORDER, PROMOTION, SYSTEM, SECURITY, MARKETING, VENDOR_PRODUCT_APPROVAL
     }
     
     public enum NotificationStatus {

@@ -3,12 +3,14 @@ package org.example.productsservice.config;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.productsservice.util.UserContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class UserContextInterceptor implements HandlerInterceptor {
 
     private final UserContext userContext;
@@ -25,6 +27,16 @@ public class UserContextInterceptor implements HandlerInterceptor {
         userContext.setEmail(email);
         userContext.setUsername(username);
         userContext.setRolesFromHeader(rolesHeader);
+
+        // Log current user roles
+        if (userId != null) {
+            log.info("User {} (email: {}) has roles: {}", 
+                    userId, 
+                    email != null ? email : "N/A", 
+                    userContext.getRoles() != null ? userContext.getRoles() : "No roles");
+        } else {
+            log.info("Anonymous request - no user context");
+        }
 
         return true;
     }
