@@ -9,7 +9,8 @@ public enum Status {
     ACCEPTED("1"),
     REJECTED("2"),
     PENDING("3"),
-    IN_PROGRESS("4");
+    IN_PROGRESS("4"),
+    DELETED("5");
 
     private final String status;
 

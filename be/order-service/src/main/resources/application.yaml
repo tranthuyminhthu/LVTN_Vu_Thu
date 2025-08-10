@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5434/order_db
+    username: admin
+    password: ${DB_PASSWORD:admin}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+server:
+  port: 8085
+service:
+  cart-service: http://localhost:8083
+  product-service: http://localhost:8080
+  ghn: https://dev-online-gateway.ghn.vn/shiip/public-api
+  profile-service: http://localhost:8081
+variable:
+  ghn-token: ${GHN_TOKEN:xxxx}
+payment:
+  vnPay:
+    url: ${VNPAY_URL:xxx}
+    tmnCode: ${VNPAY_TMN_CODE:xxxx}
+    secretKey: ${VNPAY_SECRET_KEY:xxxx}
+    returnUrl: ${VNPAY_RETURN_URL:xxxx}
+    version: ${VNPAY_VERSION:xxxx}
+    command: ${VNPAY_COMMAND:xxxx}
+    orderType: ${VNPAY_ORDER_TYPE:xxxx}

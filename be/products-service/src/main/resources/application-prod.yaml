@@ -1,0 +1,89 @@
+# Production Configuration for Products Service
+# Uses environment variables for all sensitive data
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:/products}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/products_db}
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:false}
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:10MB}
+
+# AWS Configuration
+aws:
+  access-key: ${AWS_ACCESS_KEY}
+  secret-key: ${AWS_SECRET_KEY}
+  region: ${AWS_REGION:ap-southeast-1}
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME:kltn-nlu}
+
+# Elasticsearch Configuration
+elasticsearch:
+  host: ${ELASTICSEARCH_HOST:localhost}
+  port: ${ELASTICSEARCH_PORT:9200}
+  username: ${ELASTICSEARCH_USERNAME:elastic}
+  password: ${ELASTICSEARCH_PASSWORD}
+
+# Redis Configuration
+redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD}
+
+# Keycloak Configuration
+keycloak:
+  url: ${KEYCLOAK_URL:http://localhost:8180}
+  realm: ${KEYCLOAK_REALM:kltn}
+  client-id: ${KEYCLOAK_CLIENT_ID:products-service}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET}
+
+# Service URLs
+service:
+  auth: ${AUTH_SERVICE_URL:http://localhost:8082}
+  user: ${USER_SERVICE_URL:http://localhost:8081}
+  order: ${ORDER_SERVICE_URL:http://localhost:8085}
+
+# Logging Configuration
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    org.example: ${LOG_LEVEL_ORG_EXAMPLE:DEBUG}
+  pattern:
+    console: ${LOG_PATTERN_CONSOLE:"%d{yyyy-MM-dd HH:mm:ss} - %msg%n"}
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,metrics}
+  endpoint:
+    health:
+      show-details: ${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:when-authorized}
+
+# Security Configuration
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+# Application Specific Configuration
+app:
+  product:
+    images-path: ${PRODUCT_IMAGES_PATH:/uploads/products}
+    max-per-page: ${MAX_PRODUCTS_PER_PAGE:20}
+    default-sort: ${DEFAULT_PRODUCT_SORT:createdAt} 
