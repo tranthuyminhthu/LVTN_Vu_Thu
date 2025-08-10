@@ -34,8 +34,11 @@ axiosInstance.interceptors.request.use(
   (config) => {
     const { accessToken } = useAuth();
     
-    // Không thêm Authorization header cho refresh token requests
-    if (accessToken.value && !config.url?.includes('/auth/token')) {
+    // Không thêm Authorization header cho refresh token requests và public APIs
+    if (accessToken.value && 
+        !config.url?.includes('/auth/token') && 
+        !config.url?.includes('/api/products/latest') &&
+        !config.url?.includes('/api/products/most-viewed')) {
       config.headers.Authorization = `Bearer ${accessToken.value}`;
     }
     

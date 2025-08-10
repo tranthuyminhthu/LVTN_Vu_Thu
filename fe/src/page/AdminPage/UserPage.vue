@@ -62,9 +62,20 @@
           <div class="flex gap-4 mb-4">
             <InputText v-model="vendorSearchQuery" placeholder="Tìm kiếm cửa hàng..." class="w-64" />
             <Select v-model="selectedVendorStatus" :options="vendorStatusOptions" optionLabel="name" optionValue="value" placeholder="Trạng thái" class="w-48" />
+            <Button 
+              v-if="selectedVendors.length > 0"
+              icon="pi pi-check" 
+              label="Duyệt đã chọn" 
+              severity="success" 
+              @click="acceptSelectedVendors"
+              :loading="bulkActionLoading"
+            />
           </div>
           <DataTable
             :value="vendors"
+            v-model:selection="selectedVendors"
+            selectionMode="multiple"
+            :metaKeySelection="false"
             tableStyle="min-width: 50rem"
             class="bg-white rounded-lg"
             :paginator="true"
@@ -126,7 +137,7 @@
                     severity="success" 
                     @click="updateVendorStatus(slotProps.data, 'APPROVED')" 
                   />
-                  <Button icon="pi pi-trash" severity="danger" @click="deleteVendor(slotProps.data)" />
+                  <Button icon="pi pi-times" severity="danger" @click="rejectVendor(slotProps.data)" title="Từ chối" />
                 </div>
               </template>
             </Column>
@@ -345,6 +356,10 @@ const vendorsPagination = ref({
 // Filter states
 const selectedVendorStatus = ref<'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED' | null>(null);
 const vendorSearchQuery = ref('');
+
+// Selection states
+const selectedVendors = ref<ApiVendor[]>([]);
+const bulkActionLoading = ref(false);
 
 // Vendor status options
 const vendorStatusOptions = [
@@ -663,25 +678,65 @@ const deleteUser = async (user: ApiUser) => {
   }
 };
 
-const deleteVendor = async (vendor: ApiVendor) => {
+const rejectVendor = async (vendor: ApiVendor) => {
   try {
-    await vendorApi.deleteVendor(vendor.id);
+    await vendorApi.updateVendorStatus(vendor.id, 'REJECTED');
     // Reload vendors to get updated data
     await loadVendors();
     toast.add({
       severity: 'success',
-      summary: 'Xóa thành công',
-      detail: `Cửa hàng ${vendor.name || 'N/A'} đã được xóa`,
+      summary: 'Từ chối thành công',
+      detail: `Cửa hàng ${vendor.name || 'N/A'} đã được từ chối`,
       life: 3000
     });
   } catch (error) {
-    console.error('Error deleting vendor:', error);
+    console.error('Error rejecting vendor:', error);
     toast.add({
       severity: 'error',
       summary: 'Lỗi',
-      detail: 'Không thể xóa cửa hàng',
+      detail: 'Không thể từ chối cửa hàng',
       life: 3000
     });
+  }
+};
+
+const acceptSelectedVendors = async () => {
+  if (selectedVendors.value.length === 0) {
+    toast.add({
+      severity: 'warning',
+      summary: 'Cảnh báo',
+      detail: 'Vui lòng chọn ít nhất một cửa hàng để duyệt',
+      life: 3000
+    });
+    return;
+  }
+
+  try {
+    bulkActionLoading.value = true;
+    const vendorIds = selectedVendors.value.map(vendor => vendor.id);
+    
+    await vendorApi.acceptVendors(vendorIds);
+    
+    // Clear selection and reload data
+    selectedVendors.value = [];
+    await loadVendors();
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Duyệt thành công',
+      detail: `Đã duyệt ${vendorIds.length} cửa hàng`,
+      life: 3000
+    });
+  } catch (error) {
+    console.error('Error accepting vendors:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể duyệt các cửa hàng đã chọn',
+      life: 3000
+    });
+  } finally {
+    bulkActionLoading.value = false;
   }
 };
 </script>

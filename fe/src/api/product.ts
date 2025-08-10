@@ -54,11 +54,32 @@ export interface ProductQueryParams {
   category?: string;
   status?: string;
   vendorId?: string;
+  gender?: string;
 }
 
 export const getProducts = async (params: ProductQueryParams = {}): Promise<ProductResponse> => {
   const response = await axiosInstance.get("/api/products", { params });
   return response.data;
+};
+
+export const getLatestProducts = async (): Promise<Product[]> => {
+  try {
+    const response = await axiosInstance.get("/api/products/latest");
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching latest products:', error);
+    throw error;
+  }
+};
+
+export const getMostViewedProducts = async (): Promise<Product[]> => {
+  try {
+    const response = await axiosInstance.get("/api/products/most-viewed");
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching most viewed products:', error);
+    throw error;
+  }
 };
 
 export const getProduct = async (id: string) => {

@@ -1,22 +1,16 @@
 <template>
   <div class="p-6">
     <!-- Active Campaigns Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="!grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
       <div class="bg-white rounded-lg p-6 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-500">Chiến dịch đang chạy</p>
             <h3 class="text-2xl font-semibold mt-1">{{ summary.activeCampaigns }}</h3>
           </div>
-          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+          <div class="!w-12 !h-12 bg-blue-100 rounded-full flex items-center justify-center">
             <i class="pi pi-chart-line text-blue-600 text-xl"></i>
           </div>
-        </div>
-        <div class="mt-4">
-          <span class="text-sm text-green-600">
-            <i class="pi pi-arrow-up"></i>
-            {{ summary.campaignGrowth }}% so với tháng trước
-          </span>
         </div>
       </div>
 
@@ -26,15 +20,9 @@
             <p class="text-sm text-gray-500">Tổng lượt xem</p>
             <h3 class="text-2xl font-semibold mt-1">{{ formatNumber(summary.totalViews) }}</h3>
           </div>
-          <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+          <div class="!w-12 !h-12 bg-green-100 rounded-full flex items-center justify-center">
             <i class="pi pi-eye text-green-600 text-xl"></i>
           </div>
-        </div>
-        <div class="mt-4">
-          <span class="text-sm text-green-600">
-            <i class="pi pi-arrow-up"></i>
-            {{ summary.viewGrowth }}% so với tháng trước
-          </span>
         </div>
       </div>
 
@@ -44,14 +32,9 @@
             <p class="text-sm text-gray-500">Tổng chi phí</p>
             <h3 class="text-2xl font-semibold mt-1">{{ formatPrice(summary.totalSpent) }}</h3>
           </div>
-          <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+          <div class="!w-12 !h-12 bg-purple-100 rounded-full flex items-center justify-center">
             <i class="pi pi-wallet text-purple-600 text-xl"></i>
           </div>
-        </div>
-        <div class="mt-4">
-          <span class="text-sm text-gray-500">
-            Ngân sách còn lại: {{ formatPrice(summary.remainingBudget) }}
-          </span>
         </div>
       </div>
     </div>
