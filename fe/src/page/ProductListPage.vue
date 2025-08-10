@@ -64,7 +64,7 @@
       </Accordion>
     </div>
     <div class="col-9">
-      <Breadcrumb :model="items" class="p-0">
+      <!-- <Breadcrumb :model="items" class="p-0">
         <template #item="{ item, props }">
           <router-link
             v-if="item.route"
@@ -86,8 +86,8 @@
           </a>
         </template>
         <template #separator> / </template>
-      </Breadcrumb>
-      <p class="uppercase text-xl font-bold my-4">Áo sơ mi nam</p>
+      </Breadcrumb> -->
+      <!-- <p class="uppercase text-xl font-bold my-4">Áo sơ mi nam</p>
       <div class="my-4 flex gap-4">
         <div class="flex  gap-2 flex-col cursor-pointer">
           <img
@@ -114,8 +114,8 @@
           <span class = "font-bold">Quần Jean</span>
         </div>
         
-      </div>
-      <Divider align="center"> </Divider>
+      </div> -->
+      <!-- <Divider align="center"> </Divider> -->
       <div class="my-4 flex justify-between items-center">
         <p>{{ productsPagination.totalElements }} kết quả</p>
         <div class="flex items-center gap-2">
@@ -124,7 +124,7 @@
             v-model="selectedOrderBy"
             :options="orderBy"
             optionLabel="name"
-            placeholder="Select a City"
+            placeholder="Chọn cách sắp xếp"
             :pt="{
               root: {
                 class: '!w-48 !rounded-full ',
@@ -184,6 +184,12 @@ const productsPagination = ref({
   totalPages: 0
 });
 
+// Gender mapping
+const genderMap = {
+  'Nam': 'MEN',
+  'Nữ': 'WOMEN'
+};
+
 // Load products from API
 const loadProducts = async () => {
   try {
@@ -193,6 +199,11 @@ const loadProducts = async () => {
       size: productsPagination.value.size,
       status: 'ACCEPTED'
     };
+    
+    // Add gender parameter if selected
+    if (selectedCategory.value && genderMap[selectedCategory.value as keyof typeof genderMap]) {
+      params.gender = genderMap[selectedCategory.value as keyof typeof genderMap];
+    }
     
     const response = await getProducts(params);
     
@@ -204,6 +215,8 @@ const loadProducts = async () => {
       price: product.price,
       rating: product.rating,
       status: product.status || '',
+      isFavorite: false,
+      viewCount: product.viewCount || 0,
       variants: product.variants?.map(variant => ({
         sku: variant.sku || '',
         productId: variant.productId?.toString() || '',
@@ -219,7 +232,7 @@ const loadProducts = async () => {
         name: 'Vendor',
         image: ''
       }
-    }));
+    })) as unknown as Product[];
     
     productsPagination.value = {
       page: response.page,
@@ -247,15 +260,15 @@ const items = ref([
   { label: "Đồ nam", route: "/products" },
   { label: "Áo nam", route: "/inputtext" },
 ]);
-const selectedOrderBy = ref({ name: "Bán chạy"});
+const selectedOrderBy = ref({ name: "Bán chạy", value: "popular" });
 const orderBy = ref([
-  { name: "Bán chạy"},
-  { name: "Mới nhất"},
-  { name: "Giá thấp đến cao"},
-  { name: "Giá cao đến thấp"},
-  { name: "% Giảm giá nhiều"},
+  { name: "Bán chạy", value: "popular" },
+  { name: "Mới nhất", value: "latest" },
+  { name: "Giá thấp đến cao", value: "price-asc" },
+  { name: "Giá cao đến thấp", value: "price-desc" },
+  { name: "% Giảm giá nhiều", value: "discount" },
 ]);
-const selectedCategory = ref("Production");
+const selectedCategory = ref("Nam");
 const categories = ref([
   { name: "Nữ", key: "F" },
   { name: "Nam", key: "M" },
@@ -268,6 +281,42 @@ const sizeOptions = ref<SizeOption[]>([
   { id: 4, label: "XL" },
   { id: 5, label: "XXL" },
 ]);
+
+// Sort products function
+const sortProducts = (products: Product[], sortType: string) => {
+  const sortedProducts = [...products];
+  
+  switch (sortType) {
+    case 'price-asc':
+      return sortedProducts.sort((a, b) => a.price - b.price);
+    case 'price-desc':
+      return sortedProducts.sort((a, b) => b.price - a.price);
+    case 'latest':
+      // Assuming products have createdAt field, if not, keep original order
+      return sortedProducts;
+    case 'popular':
+      // Assuming products have viewCount field, if not, keep original order
+      return sortedProducts.sort((a, b) => ((b as any).viewCount || 0) - ((a as any).viewCount || 0));
+    case 'discount':
+      // For now, keep original order since discount calculation might need more logic
+      return sortedProducts;
+    default:
+      return sortedProducts;
+  }
+};
+
+// Watch for category changes to reload products
+watch(selectedCategory, () => {
+  productsPagination.value.page = 0; // Reset to first page
+  loadProducts();
+});
+
+// Watch for sort changes
+watch(selectedOrderBy, () => {
+  if (products.value.length > 0) {
+    products.value = sortProducts(products.value, selectedOrderBy.value.value);
+  }
+});
 
 onMounted(() => {
   loadProducts();

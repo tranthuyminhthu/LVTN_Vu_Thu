@@ -3,13 +3,19 @@ import axiosInstance from './index';
 // Vendor Management Types
 export interface Vendor {
   id: string;
-  name: string | null;
-  description: string | null;
-  address: string | null;
-  phone: string | null;
-  email: string | null;
+  shopId: number;
+  name: string;
+  description: string;
+  address: string;
+  phone: string;
+  email: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
-  image: string | null;
+  image: string;
+  wardName: string;
+  districtName: string;
+  provinceName: string;
+  districtId: number;
+  wardId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -125,6 +131,12 @@ export const getVendorTotalRevenueStatsById = async (
   return response.data;
 };
 
+// Get current vendor info
+export const getCurrentVendor = async (): Promise<Vendor> => {
+  const response = await axiosInstance.get('/api/profile/vendors/me');
+  return response.data;
+};
+
 // Vendor Management API
 export const vendorApi = {
   // Lấy danh sách vendors với pagination và filter
@@ -148,5 +160,10 @@ export const vendorApi = {
   // Xóa vendor
   deleteVendor: async (id: string): Promise<void> => {
     await axiosInstance.delete(`/api/profile/vendors/${id}`);
+  },
+
+  // Accept multiple vendors
+  acceptVendors: async (vendorIds: string[]): Promise<void> => {
+    await axiosInstance.post('/api/profile/vendors/accepted', vendorIds);
   }
 }; 
