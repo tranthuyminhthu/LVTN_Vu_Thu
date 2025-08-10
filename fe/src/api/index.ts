@@ -3,7 +3,10 @@ import { useAuth } from "../composables/useAuth";
 import { refreshToken } from "./auth";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8888",
+  baseURL: "https://9be3dc87ddb5.ngrok-free.app/",
+  headers: {
+    "ngrok-skip-browser-warning": "true",
+  },
 });
 
 // Biến để track refresh token đang được xử lý
